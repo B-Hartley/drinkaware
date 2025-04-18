@@ -21,9 +21,28 @@ ENDPOINT_SUMMARY = "/tracking/v1/summary"
 ENDPOINT_DRINKS_GENERIC = "/drinks/v1/generic"
 ENDPOINT_DRINKS_CUSTOM = "/drinks/v1/custom"
 ENDPOINT_MESSAGES = "/messages/v1"
+ENDPOINT_DAY = "/tracking/v1/activity"  # Updated path based on logs
+ENDPOINT_DRINKS = "/tracking/v1/activity"  # Updated path based on logs
 
 # Update intervals
 SCAN_INTERVAL_HOURS = 1
+
+# Service names
+SERVICE_LOG_DRINK_FREE_DAY = "log_drink_free_day"
+SERVICE_LOG_DRINK = "log_drink"
+SERVICE_DELETE_DRINK = "delete_drink"
+SERVICE_REMOVE_DRINK_FREE_DAY = "remove_drink_free_day"
+SERVICE_LOG_SLEEP_QUALITY = "log_sleep_quality"
+SERVICE_REFRESH = "refresh"
+
+# Service attributes
+ATTR_ENTRY_ID = "entry_id"
+ATTR_ACCOUNT_NAME = "account_name"
+ATTR_DRINK_TYPE = "drink_id"
+ATTR_DRINK_MEASURE = "measure_id"
+ATTR_DRINK_ABV = "abv"
+ATTR_DRINK_QUANTITY = "quantity"
+ATTR_SLEEP_QUALITY = "quality"
 
 # Sensor names
 RISK_LEVEL = "risk_level"
@@ -35,6 +54,7 @@ GOALS_ACHIEVED = "goals_achieved"
 GOAL_PROGRESS = "goal_progress"
 WEEKLY_UNITS = "weekly_units"
 LAST_DRINK_DATE = "last_drink_date"
+SLEEP_QUALITY = "sleep_quality"
 
 # Risk levels
 RISK_LEVEL_LOW = "low"

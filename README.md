@@ -83,6 +83,65 @@ The integration creates several sensors:
 | Weekly Units | Total units consumed in the past week |
 | Last Drink Date | Date of your most recent recorded drink |
 
+## Services
+
+The integration provides the following services to interact with your Drinkaware account:
+
+### Log Drink-Free Day
+
+Mark a specific day as alcohol-free in your Drinkaware tracking:
+
+```yaml
+service: drinkaware.log_drink_free_day
+data:
+  entry_id: YOUR_ENTRY_ID
+  date: "2025-04-18"  # Optional, defaults to today
+```
+
+### Log Drink
+
+Record a drink in your Drinkaware tracking:
+
+```yaml
+service: drinkaware.log_drink
+data:
+  entry_id: YOUR_ENTRY_ID
+  drink_id: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"  # Lager
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
+  abv: 4.5  # Optional
+  quantity: 1  # Optional, defaults to 1
+  date: "2025-04-18"  # Optional, defaults to today
+```
+
+### Refresh Data
+
+Manually refresh data from the Drinkaware API:
+
+```yaml
+service: drinkaware.refresh
+data:
+  entry_id: YOUR_ENTRY_ID
+```
+
+For detailed information on available drink types and measures, as well as advanced usage examples, please refer to the `SERVICES_GUIDE.md` and `AVAILABLE_DRINKS.md` files.
+
+## Example Automation
+
+Here's an example of how to use the services in an automation:
+
+```yaml
+automation:
+  - alias: "Mark Yesterday as Drink-Free at Midnight"
+    trigger:
+      - platform: time
+        at: "00:00:00"
+    action:
+      - service: drinkaware.log_drink_free_day
+        data:
+          entry_id: !secret drinkaware_entry_id
+          date: "{{ (now() - timedelta(days=1)).strftime('%Y-%m-%d') }}"
+```
+
 ## Troubleshooting
 
 ### Common Issues

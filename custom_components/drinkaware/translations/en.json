@@ -73,7 +73,36 @@
       },
       "last_drink_date": {
         "name": "Last Drink Date"
+      },
+      "sleep_quality": {
+        "name": "Sleep Quality"
       }
+    }
+  },
+  "services": {
+    "log_drink_free_day": {
+      "name": "Log Drink-Free Day",
+      "description": "Mark a specific day as alcohol-free in your Drinkaware tracking."
+    },
+    "log_drink": {
+      "name": "Log Drink",
+      "description": "Record a drink in your Drinkaware tracking."
+    },
+    "delete_drink": {
+      "name": "Delete Drink",
+      "description": "Remove a recorded drink from your Drinkaware tracking."
+    },
+    "remove_drink_free_day": {
+      "name": "Remove Drink-Free Day",
+      "description": "Remove the drink-free day marking for a specific date."
+    },
+    "log_sleep_quality": {
+      "name": "Log Sleep Quality",
+      "description": "Record sleep quality for a specific date."
+    },
+    "refresh": {
+      "name": "Refresh Data",
+      "description": "Manually refresh data from the Drinkaware API."
     }
   }
 }

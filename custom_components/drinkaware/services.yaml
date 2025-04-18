@@ -1,0 +1,366 @@
+log_drink_free_day:
+  name: Log drink-free day
+  description: Mark a specific day as alcohol-free in your Drinkaware tracking
+  fields:
+    account_name:
+      name: Account Name
+      description: The name of your Drinkaware account (as entered during setup)
+      required: false
+      example: "Bruce"
+      selector:
+        text:
+    entry_id:
+      name: Config Entry ID
+      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
+      required: false
+      example: "abc123"
+      selector:
+        config_entry:
+          integration: drinkaware
+    date:
+      name: Date
+      description: The date to mark as a drink-free day (defaults to today)
+      required: false
+      example: "2025-04-18"
+      selector:
+        date:
+    remove_drinks:
+      name: Remove Existing Drinks
+      description: Automatically remove any existing drinks for the day before marking it as drink-free
+      required: false
+      default: false
+      example: true
+      selector:
+        boolean:
+
+log_drink:
+  name: Log drink
+  description: Record a drink in your Drinkaware tracking
+  fields:
+    account_name:
+      name: Account Name
+      description: The name of your Drinkaware account (as entered during setup)
+      required: false
+      example: "Bruce"
+      selector:
+        text:
+    entry_id:
+      name: Config Entry ID
+      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
+      required: false
+      example: "abc123"
+      selector:
+        config_entry:
+          integration: drinkaware
+    drink_id:
+      name: Drink Type
+      description: The drink type to log
+      required: true
+      example: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"
+      selector:
+        select:
+          options:
+            - label: "Lager (4.0% ABV)"
+              value: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"
+            - label: "Beer (5.0% ABV)"
+              value: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"
+            - label: "Ale/stout (4.5% ABV)"
+              value: "1F8DF28A-5F05-470E-833B-06C499965C99"
+            - label: "White Wine (13.0% ABV)"
+              value: "E3DEDBFD-63CE-492D-8E3E-9C24010227D8"
+            - label: "Red Wine (13.0% ABV)"
+              value: "19E82B28-9AD5-4546-A966-13B27EC6E4FB"
+            - label: "Rosé Wine (13.0% ABV)"
+              value: "FA3B43D0-A418-4F4D-8FC1-218E8DA81918"
+            - label: "Champagne (12.0% ABV)"
+              value: "61C3F476-24D1-46DB-9FA0-613ED4082531"
+            - label: "Prosecco (12.0% ABV)"
+              value: "5184149E-450E-4A63-92E5-19AD7F49FCD1"
+            - label: "Vodka (40.0% ABV)"
+              value: "0E3CA732-21D6-4631-A60C-155C2BB85C18"
+            - label: "Gin (40.0% ABV)"
+              value: "FECCEBB8-68D1-4BF1-B42F-7BB6C919B0F0"
+            - label: "Tequila (50.0% ABV)"
+              value: "32B22A73-D900-43E1-AAB6-8ADC27590B5D"
+            - label: "Rum (40.0% ABV)"
+              value: "780B45E2-26D6-4F55-A0C1-75868835D672"
+            - label: "Whisk(e)y (40.0% ABV)"
+              value: "2AAE4A2E-8C0A-40E1-BCDE-EB986111D2DE"
+            - label: "Brandy (40.0% ABV)"
+              value: "E473445D-2B75-47DA-9978-24C80093B1D0"
+            - label: "Other Spirit (40.0% ABV)"
+              value: "300546E3-DB89-49DC-B4B5-8ED96EB18C12"
+            - label: "Port/Sherry (18.0% ABV)"
+              value: "F8486573-6F92-4B63-BAEB-3E76B750E14D"
+            - label: "Cider (4.5% ABV)"
+              value: "61AD633A-7366-4497-BD36-9078466F00FE"
+            - label: "Alcopop (4.0% ABV)"
+              value: "0B2A65CA-5EC4-46B6-9E4D-6E0DDC8D57B8"
+    measure_id:
+      name: Measure Type
+      description: The measure to use
+      required: true
+      example: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+      selector:
+        select:
+          options:
+            - label: "Pint (568ml)"
+              value: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+            - label: "Half pint (284ml)"
+              value: "174F45D7-745A-45F0-9D44-88DA1075CE79"
+            - label: "Small bottle/can (330ml)"
+              value: "6B56A1FB-33A1-4E51-BED7-536751DE56BC"
+            - label: "Bottle/can (440ml)"
+              value: "0CB11B53-6E3C-4C47-A2E9-68BA40DFFE13"
+            - label: "Bottle (500ml)"
+              value: "8F185B18-2A82-4D1A-A1F7-20E01D5E2FEC"
+            - label: "Large bottle (660ml)"
+              value: "03D87F35-A1DF-40EE-9398-FA1CA55DD894"
+            - label: "Small wine glass (125ml)"
+              value: "0E40AE5F-098D-4826-ADCA-298A6A14F514"
+            - label: "Medium wine glass (175ml)"
+              value: "E586C800-24CA-4942-837A-4CD2CBF8338A"
+            - label: "Large wine glass (250ml)"
+              value: "6450132A-F73F-414A-83BB-43C37B40272F"
+            - label: "Champagne glass (125ml)"
+              value: "B6CFC69E-0E85-4F82-A109-155801BB7C79"
+            - label: "Medium champagne glass (187ml)"
+              value: "A8B1FA3D-25A2-4685-92E9-DE9D19407CE3"
+            - label: "Single spirit measure (25ml)"
+              value: "A83406D4-741F-49B4-B310-8B7DEB8B072F"
+            - label: "Double spirit measure (50ml)"
+              value: "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1"
+            - label: "Small port/sherry glass (75ml)"
+              value: "021703DD-248C-4A51-ACFD-0CE97540C8EC"
+    abv:
+      name: ABV
+      description: The alcohol percentage (optional, will use default if not specified)
+      required: false
+      example: 4.5
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 0.1
+          unit_of_measurement: "%"
+    quantity:
+      name: Quantity
+      description: The number of drinks of this type (defaults to 1)
+      required: false
+      default: 1
+      example: 2
+      selector:
+        number:
+          min: 1
+          max: 99
+          step: 1
+    date:
+      name: Date
+      description: The date to log the drink (defaults to today)
+      required: false
+      example: "2025-04-18"
+      selector:
+        date:
+    auto_remove_dfd:
+      name: Auto Remove Drink-Free Day
+      description: Automatically remove the drink-free day mark if present
+      required: false
+      default: false
+      example: true
+      selector:
+        boolean:
+
+delete_drink:
+  name: Delete drink
+  description: Remove a recorded drink from your Drinkaware tracking
+  fields:
+    account_name:
+      name: Account Name
+      description: The name of your Drinkaware account (as entered during setup)
+      required: false
+      example: "Bruce"
+      selector:
+        text:
+    entry_id:
+      name: Config Entry ID
+      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
+      required: false
+      example: "abc123"
+      selector:
+        config_entry:
+          integration: drinkaware
+    drink_id:
+      name: Drink Type
+      description: The drink type to delete
+      required: true
+      example: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"
+      selector:
+        select:
+          options:
+            - label: "Lager (4.0% ABV)"
+              value: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"
+            - label: "Beer (5.0% ABV)"
+              value: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"
+            - label: "Ale/stout (4.5% ABV)"
+              value: "1F8DF28A-5F05-470E-833B-06C499965C99"
+            - label: "White Wine (13.0% ABV)"
+              value: "E3DEDBFD-63CE-492D-8E3E-9C24010227D8"
+            - label: "Red Wine (13.0% ABV)"
+              value: "19E82B28-9AD5-4546-A966-13B27EC6E4FB"
+            - label: "Rosé Wine (13.0% ABV)"
+              value: "FA3B43D0-A418-4F4D-8FC1-218E8DA81918"
+            - label: "Champagne (12.0% ABV)"
+              value: "61C3F476-24D1-46DB-9FA0-613ED4082531"
+            - label: "Prosecco (12.0% ABV)"
+              value: "5184149E-450E-4A63-92E5-19AD7F49FCD1"
+            - label: "Vodka (40.0% ABV)"
+              value: "0E3CA732-21D6-4631-A60C-155C2BB85C18"
+            - label: "Gin (40.0% ABV)"
+              value: "FECCEBB8-68D1-4BF1-B42F-7BB6C919B0F0"
+            - label: "Tequila (50.0% ABV)"
+              value: "32B22A73-D900-43E1-AAB6-8ADC27590B5D"
+            - label: "Rum (40.0% ABV)"
+              value: "780B45E2-26D6-4F55-A0C1-75868835D672"
+            - label: "Whisk(e)y (40.0% ABV)"
+              value: "2AAE4A2E-8C0A-40E1-BCDE-EB986111D2DE"
+            - label: "Brandy (40.0% ABV)"
+              value: "E473445D-2B75-47DA-9978-24C80093B1D0"
+            - label: "Other Spirit (40.0% ABV)"
+              value: "300546E3-DB89-49DC-B4B5-8ED96EB18C12"
+            - label: "Port/Sherry (18.0% ABV)"
+              value: "F8486573-6F92-4B63-BAEB-3E76B750E14D"
+            - label: "Cider (4.5% ABV)"
+              value: "61AD633A-7366-4497-BD36-9078466F00FE"
+            - label: "Alcopop (4.0% ABV)"
+              value: "0B2A65CA-5EC4-46B6-9E4D-6E0DDC8D57B8"
+    measure_id:
+      name: Measure Type
+      description: The measure ID of the drink to delete
+      required: true
+      example: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+      selector:
+        select:
+          options:
+            - label: "Pint (568ml)"
+              value: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+            - label: "Half pint (284ml)"
+              value: "174F45D7-745A-45F0-9D44-88DA1075CE79"
+            - label: "Small bottle/can (330ml)"
+              value: "6B56A1FB-33A1-4E51-BED7-536751DE56BC"
+            - label: "Bottle/can (440ml)"
+              value: "0CB11B53-6E3C-4C47-A2E9-68BA40DFFE13"
+            - label: "Bottle (500ml)"
+              value: "8F185B18-2A82-4D1A-A1F7-20E01D5E2FEC"
+            - label: "Large bottle (660ml)"
+              value: "03D87F35-A1DF-40EE-9398-FA1CA55DD894"
+            - label: "Small wine glass (125ml)"
+              value: "0E40AE5F-098D-4826-ADCA-298A6A14F514"
+            - label: "Medium wine glass (175ml)"
+              value: "E586C800-24CA-4942-837A-4CD2CBF8338A"
+            - label: "Large wine glass (250ml)"
+              value: "6450132A-F73F-414A-83BB-43C37B40272F"
+            - label: "Champagne glass (125ml)"
+              value: "B6CFC69E-0E85-4F82-A109-155801BB7C79"
+            - label: "Medium champagne glass (187ml)"
+              value: "A8B1FA3D-25A2-4685-92E9-DE9D19407CE3"
+            - label: "Single spirit measure (25ml)"
+              value: "A83406D4-741F-49B4-B310-8B7DEB8B072F"
+            - label: "Double spirit measure (50ml)"
+              value: "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1"
+            - label: "Small port/sherry glass (75ml)"
+              value: "021703DD-248C-4A51-ACFD-0CE97540C8EC"
+    date:
+      name: Date
+      description: The date the drink was logged (defaults to today)
+      required: false
+      example: "2025-04-18"
+      selector:
+        date:
+
+remove_drink_free_day:
+  name: Remove drink-free day
+  description: Remove the drink-free day marking for a specific date
+  fields:
+    account_name:
+      name: Account Name
+      description: The name of your Drinkaware account (as entered during setup)
+      required: false
+      example: "Bruce"
+      selector:
+        text:
+    entry_id:
+      name: Config Entry ID
+      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
+      required: false
+      example: "abc123"
+      selector:
+        config_entry:
+          integration: drinkaware
+    date:
+      name: Date
+      description: The date to remove the drink-free day marking (defaults to today)
+      required: false
+      example: "2025-04-18"
+      selector:
+        date:
+
+log_sleep_quality:
+  name: Log sleep quality
+  description: Record sleep quality for a specific date
+  fields:
+    account_name:
+      name: Account Name
+      description: The name of your Drinkaware account (as entered during setup)
+      required: false
+      example: "Bruce"
+      selector:
+        text:
+    entry_id:
+      name: Config Entry ID
+      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
+      required: false
+      example: "abc123"
+      selector:
+        config_entry:
+          integration: drinkaware
+    quality:
+      name: Sleep Quality
+      description: The quality of sleep to record
+      required: true
+      example: "average"
+      selector:
+        select:
+          options:
+            - label: "Poor"
+              value: "poor"
+            - label: "Average"
+              value: "average"
+            - label: "Great"
+              value: "great"
+    date:
+      name: Date
+      description: The date to log the sleep quality (defaults to today)
+      required: false
+      example: "2025-04-18"
+      selector:
+        date:
+
+refresh:
+  name: Refresh data
+  description: Manually refresh data from the Drinkaware API
+  fields:
+    account_name:
+      name: Account Name
+      description: The name of your Drinkaware account (as entered during setup)
+      required: false
+      example: "Bruce"
+      selector:
+        text:
+    entry_id:
+      name: Config Entry ID
+      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
+      required: false
+      example: "abc123"
+      selector:
+        config_entry:
+          integration: drinkaware

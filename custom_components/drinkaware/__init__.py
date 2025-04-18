@@ -29,11 +29,13 @@ from .const import (
     ENDPOINT_GOALS,
     ENDPOINT_SUMMARY,
 )
+from .services import async_setup_services, async_unload_services
+from .utils import get_entry_id_by_account_name
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["sensor"]
-
+    
 async def async_setup(hass: HomeAssistant, config):
     """Set up the Drinkaware component."""
     # Just to initialize the domain in hass.data
@@ -62,9 +64,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
     
-    # Set up platforms - FIXED: Using async_forward_entry_setups instead of individual tasks
+    # Set up platforms - Using async_forward_entry_setups
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
         
+    # Set up services
+    await async_setup_services(hass)
+    
     # Set up entry refresh listener for token
     entry.async_on_unload(entry.add_update_listener(update_listener))
     
@@ -76,6 +81,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
+    
+    # Check if this is the last entry being removed
+    if not hass.data[DOMAIN]:
+        await async_unload_services(hass)
         
     return unload_ok
 
@@ -102,6 +111,7 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
         self.entry_id = entry_id
         self.account_name = account_name
         self.email = email
+        self._rate_limited = False
 
     async def _async_update_data(self):
         """Fetch data from Drinkaware API."""
@@ -117,30 +127,35 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
             if assessment and "assessments" in assessment and assessment["assessments"]:
                 data["assessment"] = assessment["assessments"][0]
             
-            # Add a small delay between API calls to prevent rate limiting
-            await asyncio.sleep(1)
+            # Only delay if we previously encountered rate limiting
+            if self._rate_limited:
+                await asyncio.sleep(0.5)
             
             # Get tracking stats
             stats = await self._fetch_stats()
             if stats:
                 data["stats"] = stats
                 
-            # Add a small delay between API calls to prevent rate limiting
-            await asyncio.sleep(1)
+            # Only delay if we previously encountered rate limiting
+            if self._rate_limited:
+                await asyncio.sleep(0.5)
             
             # Get active goals
             goals = await self._fetch_goals()
             if goals and "goals" in goals:
                 data["goals"] = goals["goals"]
                 
-            # Add a small delay between API calls to prevent rate limiting
-            await asyncio.sleep(1)
+            # Only delay if we previously encountered rate limiting
+            if self._rate_limited:
+                await asyncio.sleep(0.5)
             
             # Get recent drink summary
             summary = await self._fetch_summary()
             if summary and "activitySummaryDays" in summary:
                 data["summary"] = summary["activitySummaryDays"]
-                
+            
+            # Reset rate limit flag if successful    
+            self._rate_limited = False
             return data
             
         except Exception as err:
@@ -149,7 +164,7 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
             if "401" in str(err) and self.refresh_token:
                 await self._refresh_token()
                 # Retry the update after token refresh, but with a delay to prevent rate limiting
-                await asyncio.sleep(2)
+                await asyncio.sleep(1)
                 return await self._async_update_data()
             return {}
 
@@ -266,6 +281,9 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
                     # Rate limit exceeded
                     text = await resp.text()
                     _LOGGER.warning("Rate limit exceeded: %s", text)
+                    
+                    # Mark that we've been rate limited for future requests
+                    self._rate_limited = True
                     
                     # Extract retry-after time (the API suggests how many seconds to wait)
                     retry_after = 1  # Default to 1 second
