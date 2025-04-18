@@ -1,6 +1,7 @@
 # Drinkaware Integration for Home Assistant
 
 This custom integration allows you to connect your Drinkaware account to Home Assistant, enabling you to track your alcohol consumption data, risk assessments, and goals as sensors within your smart home.
+I have developed this for personal use and it is not authorised by DrinkAware so use at your own risk.  Hopefully they don't mind !
 
 ## Features
 
