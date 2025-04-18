@@ -1,0 +1,135 @@
+  - title: Alcohol Assessment
+    icon: mdi:clipboard-pulse
+    path: drinkaware-assessment
+    panel: false
+    badges: []
+    cards:
+      - type: markdown
+        content: |
+          # Drinkaware Health Assessment
+          This page shows your detailed assessment scores and risk factors.
+      - type: custom:mushroom-chips-card
+        chips:
+          - entity: sensor.drinkaware_risk_level
+            icon: mdi:alert-circle
+            name: Risk Level
+          - entity: sensor.drinkaware_self_assessment_score
+            icon: mdi:counter
+            name: Score
+      - type: custom:mushroom-template-card
+        icon: mdi:clipboard-pulse
+        icon_color: >-
+          {% if states('sensor.drinkaware_bruce_risk_level') == 'Low Risk' %}
+            green
+          {% elif states('sensor.drinkaware_bruce_risk_level') == 'Increasing
+          Risk' %}
+            orange
+          {% elif states('sensor.drinkaware_bruce_risk_level') == 'High Risk' %}
+            red
+          {% elif states('sensor.drinkaware_bruce_risk_level') == 'Possible
+          Dependency' %}
+            purple
+          {% else %}
+            blue
+          {% endif %}
+        primary: '{{ states(''sensor.drinkaware_bruce_risk_level'') }}'
+        secondary: >-
+          Your assessment score is {{
+          states('sensor.drinkaware_bruce_self_assessment_score') }}  out of 40.
+          Assessment date: {{ state_attr('sensor.drinkaware_bruce_risk_level',
+          'Assessment Date') | as_datetime | as_local | as_timestamp |
+          timestamp_custom('%d %b %Y') }}
+      - type: custom:bar-card
+        title: Assessment Components
+        positions:
+          icon: outside
+          indicator: 'off'
+          name: inside
+          value: inside
+        severity:
+          - color: green
+            from: 0
+            to: 1
+          - color: yellow
+            from: 1
+            to: 2
+          - color: orange
+            from: 2
+            to: 3
+          - color: red
+            from: 3
+        columns: 1
+        height: 25px
+        padding: 4px
+        entities:
+          - entity: sensor.drinkaware_bruce_risk_level
+            attribute: Frequency
+            name: Drinking Frequency
+            icon: mdi:calendar-refresh
+            max: 4
+          - entity: sensor.drinkaware_bruce_risk_level
+            attribute: Units
+            name: Units Per Occasion
+            icon: mdi:cup
+            max: 4
+          - entity: sensor.drinkaware_bruce_risk_level
+            attribute: Binge Frequency
+            name: Binge Drinking Frequency
+            icon: mdi:bottle-wine
+            max: 4
+          - entity: sensor.drinkaware_bruce_risk_level
+            attribute: Unable to Stop
+            name: Unable to Stop
+            icon: mdi:hand-back-left-off
+            max: 4
+          - entity: sensor.drinkaware_bruce_risk_level
+            attribute: Expectations
+            name: Failed Expectations
+            icon: mdi:emoticon-sad
+            max: 4
+          - entity: sensor.drinkaware_bruce_risk_level
+            attribute: Morning Drinking
+            name: Morning Drinking
+            icon: mdi:weather-sunset-up
+            max: 4
+          - entity: sensor.drinkaware_bruce_risk_level
+            attribute: Guilt
+            name: Guilt
+            icon: mdi:heart-off
+            max: 4
+          - entity: sensor.drinkaware_bruce_risk_level
+            attribute: Memory Loss
+            name: Memory Loss
+            icon: mdi:brain
+            max: 4
+          - entity: sensor.drinkaware_bruce_risk_level
+            attribute: Injury
+            name: Injury
+            icon: mdi:hospital-box
+            max: 4
+          - entity: sensor.drinkaware_bruce_risk_level
+            attribute: Concerns from Others
+            name: Others Concerned
+            icon: mdi:account-group
+            max: 4
+      - type: markdown
+        content: >
+          ## Understanding your scores
+
+          - **0-7**: Low risk - You're at a lower risk of experiencing
+          alcohol-related health problems
+
+          - **8-15**: Increasing risk - Your drinking may be putting you at an
+          increasing risk
+
+          - **16-19**: Higher risk - Your level of drinking is putting you at
+          high risk of experiencing alcohol-related problems
+
+          - **20+**: Possible dependency - Your drinking may be harmful or
+          making you dependent on alcohol
+      - type: picture
+        image: /local/logos/Drinkaware_logo_RGB.webp
+        alt_text: Drinkaware Logo
+        tap_action:
+          action: url
+          url_path: https://www.drinkaware.co.uk/

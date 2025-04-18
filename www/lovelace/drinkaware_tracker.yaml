@@ -1,0 +1,60 @@
+type: vertical-stack
+cards:
+  - type: markdown
+    content: |
+      # Drinkaware Tracker - Bruce
+      _Monitoring your drinking habits and goals_
+  - type: glance
+    title: Current Status
+    columns: 3
+    show_name: true
+    show_icon: true
+    show_state: true
+    entities:
+      - entity: sensor.drinkaware_bruce_risk_level
+        name: Risk
+        icon: mdi:alert-circle
+      - entity: sensor.drinkaware_bruce_weekly_units
+        name: Units
+        icon: mdi:cup
+      - entity: sensor.drinkaware_bruce_current_drink_free_streak
+        name: Streak
+        icon: mdi:fire
+  - type: entity
+    entity: sensor.drinkaware_bruce_last_drink_date
+    name: Last Drink
+  - type: gauge
+    name: Goal Progress
+    entity: sensor.drinkaware_bruce_current_goal_progress
+    unit: "%"
+    min: 0
+    max: 100
+    severity:
+      green: 75
+      yellow: 40
+      red: 0
+  - type: history-graph
+    title: Weekly Units
+    hours_to_show: 168
+    entities:
+      - entity: sensor.drinkaware_bruce_weekly_units
+  - type: entities
+    title: Drink-Free Days
+    show_header_toggle: false
+    entities:
+      - entity: sensor.drinkaware_bruce_drink_free_days
+        name: Total Drink-Free Days
+        icon: mdi:calendar-check
+      - entity: sensor.drinkaware_bruce_current_drink_free_streak
+        name: Current Streak
+        icon: mdi:fire
+      - entity: sensor.drinkaware_bruce_goals_achieved
+        name: Goals Achieved
+        icon: mdi:trophy
+  - type: button
+    name: View Full Assessment
+    show_icon: true
+    icon: mdi:clipboard-pulse
+    tap_action:
+      action: navigate
+      navigation_path: /lovelace/drinkaware-assessment
