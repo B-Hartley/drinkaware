@@ -3,6 +3,5 @@
   "render_readme": true,
   "content_in_root": false,
   "country": "GB",
-  "homeassistant": "2025.4.0",
-  "iot_class": "cloud_polling"
+  "homeassistant": "2025.4.0"
 }
