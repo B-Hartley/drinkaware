@@ -1,0 +1,15 @@
+{
+  "name": "Drinkaware Integration",
+  "owner": ["B-Hartley"],
+  "manifest": "https://raw.githubusercontent.com/B-Hartley/drinkaware/main/custom_components/drinkaware/manifest.json",
+  "url": "https://github.com/B-Hartley/drinkaware",
+  "domain": "drinkaware",
+  "country": "UK",
+  "homeassistant": "2023.4.0",
+  "category": "integration",
+  "render_readme": true,
+  "documentaion": "https://github.com/B-Hartley/drinkaware", 
+  "description": "Integrate your Drinkaware app data with Home Assistant",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/B-Hartley/drinkaware/issues"
+}
