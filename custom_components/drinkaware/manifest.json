@@ -1,12 +1,12 @@
 {
   "domain": "drinkaware",
   "name": "Drinkaware",
-  "config_flow": true,
-  "documentation": "https://github.com/B-Hartley/drinkaware",
-  "issue_tracker": "https://github.com/B-Hartley/drinkaware/issues",
-  "dependencies": ["http"],
   "codeowners": ["@B-Hartley"],
-  "requirements": [],
+  "config_flow": true,
+  "dependencies": ["http"],
+  "documentation": "https://github.com/B-Hartley/drinkaware",
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/B-Hartley/drinkaware/issues",
+  "requirements": [],  
   "version": "0.1.1"
 }
