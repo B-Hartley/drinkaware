@@ -57,7 +57,7 @@ def create_schema(schema_dict):
 DRINK_FREE_DAY_SCHEMA = create_schema({
     **BASE_DICT,
     vol.Optional(ATTR_DATE): cv.date,
-    vol.Optional("remove_drinks", default=False): cv.boolean,  # Add this line
+    vol.Optional("remove_drinks", default=False): cv.boolean,
 })
 
 LOG_DRINK_SCHEMA = create_schema({
@@ -123,90 +123,6 @@ def get_coordinator_by_name_or_id(hass, entry_id=None, account_name=None):
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Set up services for Drinkaware integration."""
     
-    async def log_drink_free_day(coordinator, date, remove_drinks=False):
-        """Log a drink-free day to Drinkaware."""
-        # Convert date to ISO format string
-        date_str = date.strftime("%Y-%m-%d")
-        
-        # If remove_drinks is True, first remove any existing drinks for the day
-        if remove_drinks:
-            try:
-                await remove_all_drinks_for_day(coordinator, date)
-                _LOGGER.info("Automatically removed all drinks before marking as drink-free day")
-            except Exception as err:
-                _LOGGER.warning("Error removing drinks before marking as drink-free day: %s", err)
-        
-        # Based on MITM logs, for drink-free day we need to PUT to the day endpoint
-        url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}/drinkfreeday"
-        
-        headers = {
-            "Authorization": f"Bearer {coordinator.access_token}",
-            "Accept": "application/json",
-        }
-        
-        async with coordinator.session.put(url, headers=headers) as resp:
-            if resp.status != 200 and resp.status != 204:
-                text = await resp.text()
-                _LOGGER.error("Error logging drink-free day: %s - %s", resp.status, text)
-                raise Exception(f"Failed to log drink-free day: {resp.status} - {text}")
-            
-            _LOGGER.info("Successfully logged drink-free day for %s", date_str)
-            return True
-
-
-    async def remove_all_drinks_for_day(coordinator, date):
-        """Remove all drinks for a specific day.
-        
-        This is a helper function used before marking a day as drink-free.
-        It first gets all drinks for the day, then removes them one by one.
-        """
-        # Convert date to ISO format string
-        date_str = date.strftime("%Y-%m-%d")
-        
-        # First, we need to get all drinks for the day
-        url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
-        
-        headers = {
-            "Authorization": f"Bearer {coordinator.access_token}",
-            "Accept": "application/json",
-        }
-        
-        try:
-            # Get all activity for the day
-            async with coordinator.session.get(url, headers=headers) as resp:
-                if resp.status != 200:
-                    text = await resp.text()
-                    _LOGGER.error("Error getting drinks for day: %s - %s", resp.status, text)
-                    return False
-                    
-                activity = await resp.json()
-                if not activity or "drinks" not in activity:
-                    _LOGGER.debug("No drinks found for %s", date_str)
-                    return True
-                    
-                drinks = activity.get("drinks", [])
-                
-                # Now remove each drink
-                for drink in drinks:
-                    drink_id = drink.get("drinkId")
-                    measure_id = drink.get("measureId")
-                    
-                    if drink_id and measure_id:
-                        try:
-                            # Use the delete_drink function to remove this drink
-                            await delete_drink(coordinator, drink_id, measure_id, date)
-                            _LOGGER.debug("Removed drink %s (%s) from %s", 
-                                         drink.get("drinkName", "Unknown"), 
-                                         drink.get("measureName", "Unknown"),
-                                         date_str)
-                        except Exception as err:
-                            _LOGGER.error("Error removing drink: %s", err)
-                
-                return True
-        except Exception as err:
-            _LOGGER.error("Error in remove_all_drinks_for_day: %s", err)
-            return False
-
     async def async_log_drink_free_day(service_call) -> None:
         """Log a drink-free day to Drinkaware."""
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
@@ -219,13 +135,97 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             raise HomeAssistantError(
                 "No matching Drinkaware integration found. Please specify a valid entry_id or account_name"
             )
-            
+        
         try:
-            await log_drink_free_day(coordinator, date, remove_drinks)
-            # Trigger refresh to update the sensors with new data
+            # First refresh to get the latest data
+            _LOGGER.info("Refreshing data before setting drink-free day")
+            await coordinator.async_refresh()
+            
+            # Check if there are already drinks for this day
+            has_drinks = False
+            date_str = date.strftime("%Y-%m-%d")
+            
+            # Check existing drinks in the API data
+            if coordinator.data and "summary" in coordinator.data:
+                for day_data in coordinator.data["summary"]:
+                    if day_data.get("date") == date_str and day_data.get("drinks", 0) > 0:
+                        has_drinks = True
+                        drink_count = day_data.get("drinks", 0)
+                        _LOGGER.info(f"Found {drink_count} drinks for {date_str}")
+                        break
+            
+            # If we have drinks and should remove them
+            if has_drinks and remove_drinks:
+                _LOGGER.info(f"Attempting to remove all drinks for {date_str} before marking as drink-free")
+                
+                # Get detailed information about what drinks are logged for the day
+                url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
+                headers = {
+                    "Authorization": f"Bearer {coordinator.access_token}",
+                    "Accept": "application/json",
+                }
+                
+                async with coordinator.session.get(url, headers=headers) as resp:
+                    if resp.status != 200:
+                        text = await resp.text()
+                        _LOGGER.error(f"Error retrieving drinks for {date_str}: {resp.status} - {text}")
+                        raise HomeAssistantError(f"Failed to retrieve drinks: {text}")
+                    
+                    activity = await resp.json()
+                    drinks = activity.get("drinks", [])
+                    _LOGGER.info(f"Found {len(drinks)} drinks to remove")
+                    
+                    # Remove each drink individually
+                    for drink in drinks:
+                        drink_id = drink.get("drinkId")
+                        measure_id = drink.get("measureId")
+                        drink_name = drink.get("drinkName", "Unknown")
+                        
+                        if drink_id and measure_id:
+                            _LOGGER.info(f"Removing {drink_name} from {date_str}")
+                            try:
+                                # Use DELETE to completely remove the drink
+                                delete_url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}/{drink_id}/{measure_id}"
+                                async with coordinator.session.delete(delete_url, headers=headers) as del_resp:
+                                    if del_resp.status not in (200, 204):
+                                        text = await del_resp.text()
+                                        _LOGGER.warning(f"Error removing drink {drink_name}: {del_resp.status} - {text}")
+                                    else:
+                                        _LOGGER.info(f"Successfully removed {drink_name}")
+                            except Exception as err:
+                                _LOGGER.warning(f"Exception removing drink {drink_name}: {err}")
+                
+                # Verify all drinks were removed
+                async with coordinator.session.get(url, headers=headers) as verify_resp:
+                    if verify_resp.status == 200:
+                        verify_data = await verify_resp.json()
+                        remaining_drinks = verify_data.get("drinks", [])
+                        
+                        if remaining_drinks:
+                            _LOGGER.warning(f"Still {len(remaining_drinks)} drinks remaining after removal")
+                            raise HomeAssistantError(f"Could not remove all drinks for {date_str}. Please try again or remove drinks manually.")
+                        else:
+                            _LOGGER.info(f"Successfully verified all drinks removed for {date_str}")
+            
+            # Now try to log the drink-free day
+            url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}/drinkfreeday"
+            headers = {
+                "Authorization": f"Bearer {coordinator.access_token}",
+                "Accept": "application/json",
+            }
+            
+            async with coordinator.session.put(url, headers=headers) as resp:
+                if resp.status not in (200, 204):
+                    text = await resp.text()
+                    _LOGGER.error(f"Error logging drink-free day: {resp.status} - {text}")
+                    raise HomeAssistantError(f"Failed to log drink-free day: {resp.status} - {text}")
+                
+                _LOGGER.info(f"Successfully marked {date_str} as drink-free")
+            
+            # Final refresh to update the sensors with new data
             await coordinator.async_refresh()
         except Exception as err:
-            _LOGGER.error("Error logging drink-free day: %s", err)
+            _LOGGER.error(f"Error logging drink-free day: {err}")
             raise HomeAssistantError(f"Error logging drink-free day: {err}")
             
     async def async_log_drink(service_call) -> None:
@@ -256,11 +256,63 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             )
             
         try:
-            await log_drink(coordinator, drink_type, drink_measure, abv, quantity, date, auto_remove_dfd)
+            # If auto_remove_dfd is True, check if day is marked as drink-free and remove that mark first
+            if auto_remove_dfd:
+                try:
+                    await remove_drink_free_day(coordinator, date)
+                    _LOGGER.info("Automatically removed drink-free day flag before adding drink")
+                except Exception as err:
+                    # If removing the drink-free day fails, it probably wasn't set, so we can ignore the error
+                    _LOGGER.debug(f"Day was not marked as drink-free or error removing: {err}")
+            
+            # Check if we're adding drinks or setting an exact quantity
+            should_increment = True
+            
+            if quantity == 1:
+                # For quantity=1, we might be adding a drink or setting it to exactly 1
+                # Let's check if this drink already exists
+                date_str = date.strftime("%Y-%m-%d")
+                url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
+                
+                headers = {
+                    "Authorization": f"Bearer {coordinator.access_token}",
+                    "Accept": "application/json",
+                }
+                
+                async with coordinator.session.get(url, headers=headers) as resp:
+                    if resp.status == 200:
+                        activity = await resp.json()
+                        drinks = activity.get("drinks", [])
+                        
+                        # Check if this drink type and measure already exists
+                        for drink in drinks:
+                            if (drink.get("drinkId") == drink_type and 
+                                drink.get("measureId") == drink_measure):
+                                # Already exists, so we should increment
+                                should_increment = True
+                                break
+            elif quantity > 1:
+                # If quantity > 1, we're explicitly setting a quantity
+                should_increment = False
+                
+            if should_increment:
+                # Use POST with quantityAdjustment to add a drink
+                await add_drink(coordinator, drink_type, drink_measure, abv, date)
+                _LOGGER.info(f"Added 1 drink using quantityAdjustment")
+                
+                # If quantity > 1, add additional drinks
+                for _ in range(1, quantity):
+                    await add_drink(coordinator, drink_type, drink_measure, abv, date)
+                    _LOGGER.info(f"Added additional drink")
+            else:
+                # Use PUT with quantity to set an absolute value
+                await set_drink_quantity(coordinator, drink_type, drink_measure, abv, quantity, date)
+                _LOGGER.info(f"Set drink quantity to {quantity}")
+            
             # Trigger refresh to update the sensors with new data
             await coordinator.async_refresh()
         except Exception as err:
-            _LOGGER.error("Error logging drink: %s", err)
+            _LOGGER.error(f"Error logging drink: {err}")
             raise HomeAssistantError(f"Error logging drink: {err}")
 
     async def async_delete_drink(service_call) -> None:
@@ -284,11 +336,49 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             )
             
         try:
-            await delete_drink(coordinator, drink_type, drink_measure, date)
+            # First check if this drink exists and get its current quantity
+            date_str = date.strftime("%Y-%m-%d")
+            url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
+            
+            headers = {
+                "Authorization": f"Bearer {coordinator.access_token}",
+                "Accept": "application/json",
+            }
+            
+            current_quantity = 0
+            drink_name = "Unknown Drink"
+            
+            async with coordinator.session.get(url, headers=headers) as resp:
+                if resp.status == 200:
+                    activity = await resp.json()
+                    drinks = activity.get("drinks", [])
+                    
+                    for drink in drinks:
+                        if (drink.get("drinkId") == drink_type and 
+                            drink.get("measureId") == drink_measure):
+                            current_quantity = drink.get("quantity", 0)
+                            drink_name = drink.get("name", "Unknown Drink")
+                            break
+            
+            if current_quantity == 0:
+                _LOGGER.warning(f"No drink of type {drink_type} found for {date_str}")
+                raise HomeAssistantError(f"No matching drink found for {date_str}")
+            
+            # Delete the drink
+            delete_url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}/{drink_type}/{drink_measure}"
+            
+            async with coordinator.session.delete(delete_url, headers=headers) as resp:
+                if resp.status not in (200, 204):
+                    text = await resp.text()
+                    _LOGGER.error(f"Error deleting drink: {resp.status} - {text}")
+                    raise HomeAssistantError(f"Failed to delete drink: {resp.status} - {text}")
+                
+                _LOGGER.info(f"Successfully deleted {current_quantity}x {drink_name} for {date_str}")
+            
             # Trigger refresh to update the sensors with new data
             await coordinator.async_refresh()
         except Exception as err:
-            _LOGGER.error("Error deleting drink: %s", err)
+            _LOGGER.error(f"Error deleting drink: {err}")
             raise HomeAssistantError(f"Error deleting drink: {err}")
             
     async def async_remove_drink_free_day(service_call) -> None:
@@ -385,23 +475,10 @@ async def async_unload_services(hass: HomeAssistant) -> None:
     hass.services.async_remove(DOMAIN, SERVICE_REFRESH)
 
 
-async def log_drink(coordinator, drink_type, drink_measure, abv, quantity, date, auto_remove_dfd=False):
-    """Log a drink to Drinkaware."""
-    # Convert date to ISO format string
+async def add_drink(coordinator, drink_type, drink_measure, abv, date):
+    """Add a single drink to Drinkaware using quantityAdjustment."""
     date_str = date.strftime("%Y-%m-%d")
     
-    # If auto_remove_dfd is True, check if day is marked as drink-free and remove that mark first
-    if auto_remove_dfd:
-        try:
-            # Check if we need to remove a drink-free day by trying to remove it
-            await remove_drink_free_day(coordinator, date)
-            _LOGGER.info("Automatically removed drink-free day flag before adding drink")
-        except Exception as err:
-            # If removing the drink-free day fails, it probably wasn't set, so we can ignore the error
-            _LOGGER.debug("Day was not marked as drink-free or error removing: %s", err)
-    
-    # Based on MITM logs, the API can use either PUT with quantity or POST with quantityAdjustment
-    # PUT seems to be for setting an absolute value, POST for incremental changes
     url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
     
     headers = {
@@ -410,11 +487,44 @@ async def log_drink(coordinator, drink_type, drink_measure, abv, quantity, date,
         "Accept": "application/json",
     }
     
-    # The payload for logging a drink - use PUT with quantity for setting an absolute value
+    # The payload for incrementing a drink - use POST with quantityAdjustment
     payload = {
         "drinkId": drink_type,
         "measureId": drink_measure,
-        "quantity": quantity  # Sets the absolute quantity
+        "quantityAdjustment": 1  # Add one drink
+    }
+    
+    # If user provided a custom ABV, include it
+    if abv > 0:
+        payload["abv"] = abv
+    
+    async with coordinator.session.post(url, headers=headers, json=payload) as resp:
+        if resp.status not in (200, 204):
+            text = await resp.text()
+            _LOGGER.error(f"Error adding drink: {resp.status} - {text}")
+            raise Exception(f"Failed to add drink: {resp.status} - {text}")
+        
+        result = await resp.json()
+        _LOGGER.info(f"Successfully added drink for {date_str} (new quantity: {result.get('quantity', 0)})")
+        return True, result.get("quantity", 0)
+
+async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quantity, date):
+    """Set the absolute quantity of a drink type for a specific day."""
+    date_str = date.strftime("%Y-%m-%d")
+    
+    url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
+    
+    headers = {
+        "Authorization": f"Bearer {coordinator.access_token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    
+    # The payload for setting a drink quantity - use PUT with quantity
+    payload = {
+        "drinkId": drink_type,
+        "measureId": drink_measure,
+        "quantity": quantity  # Set absolute quantity
     }
     
     # If user provided a custom ABV, include it
@@ -422,101 +532,13 @@ async def log_drink(coordinator, drink_type, drink_measure, abv, quantity, date,
         payload["abv"] = abv
     
     async with coordinator.session.put(url, headers=headers, json=payload) as resp:
-        if resp.status != 200 and resp.status != 204:
+        if resp.status not in (200, 204):
             text = await resp.text()
-            _LOGGER.error("Error logging drink: %s - %s", resp.status, text)
-            raise Exception(f"Failed to log drink: {resp.status} - {text}")
+            _LOGGER.error(f"Error setting drink quantity: {resp.status} - {text}")
+            raise Exception(f"Failed to set drink quantity: {resp.status} - {text}")
         
         result = await resp.json()
-        _LOGGER.info("Successfully logged drink for %s (quantity: %s)", date_str, result.get("quantity", 0))
-        return True
-
-
-async def delete_drink(coordinator, drink_type, drink_measure, date):
-    """Delete a drink from Drinkaware.
-    
-    This function will completely delete the specified drink entry, not just reduce its quantity.
-    """
-    # Convert date to ISO format string
-    date_str = date.strftime("%Y-%m-%d")
-    
-    # Based on the MITM logs, there are two ways to delete drinks:
-    # 1. Use POST with quantityAdjustment: -1 to decrement
-    # 2. Use DELETE on the specific drink ID and measure ID to completely remove it
-    
-    # We'll use method #2 which completely removes the drink
-    url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}/{drink_type}/{drink_measure}"
-    
-    headers = {
-        "Authorization": f"Bearer {coordinator.access_token}",
-        "Accept": "application/json",
-    }
-    
-    async with coordinator.session.delete(url, headers=headers) as resp:
-        if resp.status != 200 and resp.status != 204:
-            text = await resp.text()
-            _LOGGER.error("Error deleting drink: %s - %s", resp.status, text)
-            raise Exception(f"Failed to delete drink: {resp.status} - {text}")
-        
-        _LOGGER.info("Successfully deleted drink for %s", date_str)
-        return True
-
-
-async def adjust_drink_quantity(coordinator, drink_type, drink_measure, quantity_adjustment, date):
-    """Adjust the quantity of a drink by incrementing or decrementing.
-    
-    This is useful for adding or reducing drink quantities without knowing the current count.
-    """
-    # Convert date to ISO format string
-    date_str = date.strftime("%Y-%m-%d")
-    
-    url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
-    
-    headers = {
-        "Authorization": f"Bearer {coordinator.access_token}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-    
-    # The payload for adjusting a drink quantity
-    payload = {
-        "drinkId": drink_type,
-        "measureId": drink_measure,
-        "quantityAdjustment": quantity_adjustment  # Can be positive or negative
-    }
-    
-    async with coordinator.session.post(url, headers=headers, json=payload) as resp:
-        if resp.status != 200 and resp.status != 204:
-            text = await resp.text()
-            _LOGGER.error("Error adjusting drink quantity: %s - %s", resp.status, text)
-            raise Exception(f"Failed to adjust drink quantity: {resp.status} - {text}")
-        
-        result = await resp.json()
-        new_quantity = result.get("quantity", 0)
-        _LOGGER.info("Successfully adjusted drink quantity for %s (new quantity: %s)", date_str, new_quantity)
-        return True, new_quantity
-
-
-async def log_drink_free_day(coordinator, date):
-    """Log a drink-free day to Drinkaware."""
-    # Convert date to ISO format string
-    date_str = date.strftime("%Y-%m-%d")
-    
-    # Based on MITM logs, for drink-free day we need to PUT to the day endpoint
-    url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}/drinkfreeday"
-    
-    headers = {
-        "Authorization": f"Bearer {coordinator.access_token}",
-        "Accept": "application/json",
-    }
-    
-    async with coordinator.session.put(url, headers=headers) as resp:
-        if resp.status != 200 and resp.status != 204:
-            text = await resp.text()
-            _LOGGER.error("Error logging drink-free day: %s - %s", resp.status, text)
-            raise Exception(f"Failed to log drink-free day: {resp.status} - {text}")
-        
-        _LOGGER.info("Successfully logged drink-free day for %s", date_str)
+        _LOGGER.info(f"Successfully set drink quantity for {date_str} to {result.get('quantity', 0)}")
         return True
 
 
@@ -534,7 +556,7 @@ async def remove_drink_free_day(coordinator, date):
     }
     
     async with coordinator.session.delete(url, headers=headers) as resp:
-        if resp.status != 200 and resp.status != 204:
+        if resp.status not in (200, 204):
             text = await resp.text()
             _LOGGER.error("Error removing drink-free day: %s - %s", resp.status, text)
             raise Exception(f"Failed to remove drink-free day: {resp.status} - {text}")
@@ -563,7 +585,7 @@ async def log_sleep_quality(coordinator, quality, date):
     }
     
     async with coordinator.session.put(url, headers=headers, json=payload) as resp:
-        if resp.status != 200 and resp.status != 204:
+        if resp.status not in (200, 204):
             text = await resp.text()
             _LOGGER.error("Error logging sleep quality: %s - %s", resp.status, text)
             raise Exception(f"Failed to log sleep quality: {resp.status} - {text}")

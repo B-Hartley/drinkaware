@@ -112,6 +112,7 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
         self.account_name = account_name
         self.email = email
         self._rate_limited = False
+        self._activity_cache = {}  # Cache for detailed activity data
 
     async def _async_update_data(self):
         """Fetch data from Drinkaware API."""
@@ -153,6 +154,17 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
             summary = await self._fetch_summary()
             if summary and "activitySummaryDays" in summary:
                 data["summary"] = summary["activitySummaryDays"]
+                
+                # Fetch detailed activity for today to support the Drinks Today sensor
+                today = datetime.now().strftime("%Y-%m-%d")
+                
+                for day in data["summary"]:
+                    if day.get("date") == today and day.get("drinks", 0) > 0:
+                        # If today has drinks, fetch detailed information
+                        today_activity = await self._fetch_activity_for_day(today)
+                        if today_activity:
+                            self._activity_cache[today] = today_activity
+                        break
             
             # Reset rate limit flag if successful    
             self._rate_limited = False
@@ -261,6 +273,11 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
         }
         
         return await self._make_api_request(url, params)
+        
+    async def _fetch_activity_for_day(self, date_str):
+        """Fetch detailed activity data for a specific day."""
+        url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
+        return await self._make_api_request(url)
         
     async def _make_api_request(self, url, params=None):
         """Make authenticated request to Drinkaware API."""

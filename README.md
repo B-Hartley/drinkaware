@@ -1,7 +1,7 @@
 # Drinkaware Integration for Home Assistant
 
 This custom integration allows you to connect your Drinkaware account to Home Assistant, enabling you to track your alcohol consumption data, risk assessments, and goals as sensors within your smart home.
-I have developed this for personal use and it is not authorised by DrinkAware so use at your own risk.  Hopefully they don't mind !
+I have developed this for personal use and it is not affiliated with or authorized by DrinkAware, so use at your own risk.
 
 ## Features
 
@@ -10,7 +10,9 @@ I have developed this for personal use and it is not authorised by DrinkAware so
 - Monitor weekly unit consumption
 - Track goal progress
 - View your self-assessment scores
-- And more!
+- See detailed list of drinks consumed today
+- Log new drinks and drink-free days via services
+- Remove logged drinks when needed
 
 ## Installation
 
@@ -19,15 +21,15 @@ I have developed this for personal use and it is not authorised by DrinkAware so
 1. Make sure you have [HACS](https://hacs.xyz/) installed
 2. Add this repository as a custom repository in HACS:
    - Go to HACS → Integrations → ⋮ (menu) → Custom Repositories
-   - Add `https://github.com/yourusername/hass-drinkaware` as a repository
+   - Add `https://github.com/B-Hartley/drinkaware` as a repository
    - Category: Integration
 3. Click "Install" on the Drinkaware integration
 4. Restart Home Assistant
 
 ### Method 2: Manual Installation
 
-1. Download the latest release from the [Releases](https://github.com/yourusername/hass-drinkaware/releases) page
-2. Extract the `drinkaware` folder from the release into your `custom_components` directory
+1. Download the latest release
+2. Extract the `drinkaware` folder into your `custom_components` directory
 3. Restart Home Assistant
 
 ## Configuration
@@ -52,12 +54,8 @@ This method uses OAuth to authenticate with Drinkaware:
 3. Click the link to authorize Drinkaware
 4. Log in with your Drinkaware credentials
 5. After successful login, you'll be redirected to a URL that starts with `uk.co.drinkaware.drinkaware://`
-6. Your browser might show an error like "Can't open this page" - this is normal!
-7. **Important:** Copy the entire URL from your browser's address bar
-   - If you can't see the full URL, open your browser's developer tools (F12), go to the Network tab, and look for the redirect URL
-8. Paste the copied URL in the next step of the setup process
-
-**Troubleshooting tip:** If you've previously logged into Drinkaware in your browser, you might need to clear your browser cookies for `login.drinkaware.co.uk` before starting this process.
+6. **Important:** Copy the entire URL from your browser's address bar
+7. Paste the copied URL in the next step of the setup process
 
 #### Manual Token Entry
 
@@ -83,6 +81,7 @@ The integration creates several sensors:
 | Current Goal Progress | Progress toward your current goal as a percentage |
 | Weekly Units | Total units consumed in the past week |
 | Last Drink Date | Date of your most recent recorded drink |
+| Drinks Today | Number of drinks consumed today, with detailed list in attributes |
 
 ## Services
 
@@ -95,8 +94,9 @@ Mark a specific day as alcohol-free in your Drinkaware tracking:
 ```yaml
 service: drinkaware.log_drink_free_day
 data:
-  entry_id: YOUR_ENTRY_ID
+  account_name: "Bruce"  # Or use entry_id instead
   date: "2025-04-18"  # Optional, defaults to today
+  remove_drinks: true  # Optional, removes existing drinks first
 ```
 
 ### Log Drink
@@ -106,11 +106,25 @@ Record a drink in your Drinkaware tracking:
 ```yaml
 service: drinkaware.log_drink
 data:
-  entry_id: YOUR_ENTRY_ID
-  drink_id: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"  # Lager
+  account_name: "Bruce"  # Or use entry_id instead
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer
   measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
   abv: 4.5  # Optional
   quantity: 1  # Optional, defaults to 1
+  date: "2025-04-18"  # Optional, defaults to today
+  auto_remove_dfd: true  # Optional, removes drink-free day mark if present
+```
+
+### Delete Drink
+
+Remove a recorded drink from your tracking:
+
+```yaml
+service: drinkaware.delete_drink
+data:
+  account_name: "Bruce"  # Or use entry_id instead
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
   date: "2025-04-18"  # Optional, defaults to today
 ```
 
@@ -121,10 +135,10 @@ Manually refresh data from the Drinkaware API:
 ```yaml
 service: drinkaware.refresh
 data:
-  entry_id: YOUR_ENTRY_ID
+  account_name: "Bruce"  # Or use entry_id instead
 ```
 
-For detailed information on available drink types and measures, as well as advanced usage examples, please refer to the `SERVICES_GUIDE.md` and `AVAILABLE_DRINKS.md` files.
+For more detailed information on available drink types, measures, and advanced usage examples, please refer to the [GUIDE.md](GUIDE.md) file.
 
 ## Example Automation
 
@@ -139,40 +153,14 @@ automation:
     action:
       - service: drinkaware.log_drink_free_day
         data:
-          entry_id: !secret drinkaware_entry_id
+          account_name: "Bruce"
           date: "{{ (now() - timedelta(days=1)).strftime('%Y-%m-%d') }}"
+          remove_drinks: true
 ```
 
 ## Troubleshooting
 
-### Common Issues
-
-#### "Cannot find authorization code in URL"
-- Make sure you're copying the entire URL after redirection
-- Check for the `code=` parameter in the URL
-- Try using your browser's developer tools to see the network requests
-
-#### "Token refresh failed"
-- Your authentication token may have expired
-- Try removing the integration and setting it up again
-
-#### "Rate limit exceeded"
-- The integration is making too many requests to the Drinkaware API
-- This should resolve automatically as the integration will wait before retrying
-
-### Debug Logging
-
-To enable debug logging for the integration:
-
-1. Add the following to your `configuration.yaml`:
-   ```yaml
-   logger:
-     default: info
-     logs:
-       custom_components.drinkaware: debug
-   ```
-2. Restart Home Assistant
-3. Check the logs for detailed information about any issues
+For common issues and troubleshooting tips, please see the [TROUBLESHOOTING.md](TROUBLESHOOTING.md) file.
 
 ## Privacy
 
@@ -180,7 +168,11 @@ Your Drinkaware credentials and data are only stored locally in your Home Assist
 
 ## Support
 
-If you encounter any issues or have feature requests, please create an issue on the [GitHub repository](https://github.com/yourusername/hass-drinkaware/issues).
+If you encounter any issues or have feature requests, please create an issue on the [GitHub repository](https://github.com/B-Hartley/drinkaware/issues).
+
+## Disclaimer
+
+This integration is not officially affiliated with or endorsed by the Drinkaware Trust. It is an independent project developed for the Home Assistant community.
 
 ## License
 
