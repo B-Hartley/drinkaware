@@ -9,13 +9,13 @@ This guide covers common issues you might encounter with the Drinkaware integrat
 **Problem:** During OAuth setup, you receive an error about missing authorization code.
 
 **Solution:**
-1. Make sure you're copying the **entire URL** after redirection
-2. Look for the `code=` parameter in the URL
-3. Try using your browser's developer tools to see the full network requests:
+1. Make sure you're copying the URL from your browser's developer tools correctly:
    - Press F12 to open Developer Tools
    - Go to the Network tab
-   - Look for a redirect to `uk.co.drinkaware.drinkaware://`
-   - Copy the entire URL from this redirect
+   - Look for a request with "callback" in the name (usually the one that's shown as canceled or redirected)
+   - Right-click on this request and select "Copy URL"
+   - The URL should start with `uk.co.drinkaware.drinkaware://` and contain a `code=` parameter
+2. Make sure you're pasting the complete URL including all parameters
 
 **Additional tip:** If you've previously logged into Drinkaware in your browser, try clearing cookies for `login.drinkaware.co.uk` before starting the process.
 
@@ -28,7 +28,6 @@ This guide covers common issues you might encounter with the Drinkaware integrat
 2. Go to Settings → Devices & Services
 3. Find Drinkaware and click "Configure"
 4. Re-authenticate with your Drinkaware account
-5. If this happens repeatedly, try using the manual token entry method instead
 
 ## API Issues
 

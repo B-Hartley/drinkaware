@@ -9,31 +9,23 @@
         }
       },
       "auth_method": {
-        "title": "Choose Authentication Method",
-        "description": "Select how you want to authenticate with Drinkaware."
+        "title": "OAuth Authentication",
+        "description": "The Drinkaware integration uses OAuth for authentication."
       },
       "oauth_auth": {
         "title": "Authorize Drinkaware",
-        "description": "1. Click the link below to log in to your Drinkaware account:\n\n{auth_url}\n\n2. After logging in, you'll be redirected to a URL that won't load properly - this is normal\n\n3. IMPORTANT: Copy the ENTIRE URL from your browser's address bar (starts with 'uk.co.drinkaware.drinkaware://')\n\n4. Paste that URL in the next step"
+        "description": "1. Click the link below to log in to your Drinkaware account:\n\n{auth_url}\n\n2. After logging in, you'll be redirected to a page that won't load properly - this is normal\n\n3. Open your browser's Developer Tools (press F12), go to the Network tab\n\n4. Find the request with 'callback' in the name, right-click and select 'Copy URL'\n\n5. Paste that URL in the next step"
       },
       "code": {
         "title": "Enter Redirect URL",
-        "description": "Paste the ENTIRE redirect URL from your browser's address bar. It should start with 'uk.co.drinkaware.drinkaware://' and contain 'code=' somewhere in it.\n\nTIP: If you don't see the URL, open your browser's developer tools (F12), go to Network tab, and look for a redirect to 'uk.co.drinkaware.drinkaware://'",
+        "description": "Paste the URL you copied from the Network tab in Developer Tools.\n\nIt should start with 'uk.co.drinkaware.drinkaware://oauth/callback' and include a code parameter.\n\nIf you can't find it, look for a canceled/redirected request in the Network tab.",
         "data": {
           "redirect_url": "Redirect URL"
-        }
-      },
-      "manual_token": {
-        "title": "Enter Drinkaware Token",
-        "description": "Enter a valid authentication token from the Drinkaware app.",
-        "data": {
-          "token": "Authentication Token"
         }
       }
     },
     "error": {
       "cannot_connect": "Failed to connect to Drinkaware. Please check your internet connection and try again.",
-      "invalid_token": "The provided token is invalid or expired. Please provide a valid token.",
       "connection_error": "Could not connect to Drinkaware with the provided code.",
       "auth_error": "Authentication failed. Please try again.",
       "no_code_in_url": "Could not find authorization code in the URL. The URL should look like: uk.co.drinkaware.drinkaware://oauth/callback?state=XXXX&code=YYYY",

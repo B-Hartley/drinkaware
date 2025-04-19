@@ -43,28 +43,16 @@ The integration can be set up through the Home Assistant UI:
 
 ### Authentication Method
 
-The integration offers two authentication methods:
-
-#### OAuth Authentication (Recommended)
-
-This method uses OAuth to authenticate with Drinkaware:
+This integration uses OAuth to authenticate with Drinkaware:
 
 1. Enter a name for your Drinkaware account
-2. Choose "Use OAuth" as the authentication method
-3. Click the link to authorize Drinkaware
-4. Log in with your Drinkaware credentials
-5. After successful login, you'll be redirected to a URL that starts with `uk.co.drinkaware.drinkaware://`
-6. **Important:** Copy the entire URL from your browser's address bar
-7. Paste the copied URL in the next step of the setup process
+2. Click the link to authorize Drinkaware
+3. Log in with your Drinkaware credentials
+4. After successful login, you'll be redirected to a page that won't load (this is normal)
+5. **Important:** Open your browser's Developer Tools (press F12), go to the Network tab, find the callback URL, right-click and select "Copy URL"
+6. Paste the copied URL in the next step of the setup process
 
-#### Manual Token Entry
-
-If you have technical knowledge and can extract tokens from the Drinkaware app:
-
-1. Enter a name for your Drinkaware account
-2. Choose "Enter token manually" as the authentication method
-3. Extract a valid authentication token from the Drinkaware app (using tools like MITM Proxy)
-4. Paste the token in the field provided
+**Note:** In the Network tab, look for a request with "callback" in the name. The URL should start with `uk.co.drinkaware.drinkaware://oauth/callback` and contain a code parameter.
 
 ## Available Sensors
 

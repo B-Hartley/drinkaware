@@ -74,28 +74,21 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         
         if user_input is not None:
-            # User has chosen an option
-            if user_input.get("auth_method") == "oauth":
-                self._session = async_get_clientsession(self.hass)
-                # Generate PKCE code verifier and challenge
-                self._code_verifier = secrets.token_urlsafe(64)[:128]
-                code_challenge = self._generate_code_challenge(self._code_verifier)
-                
-                # Generate authorization URL
-                self._auth_url = self._get_authorization_url(code_challenge)
-                
-                return await self.async_step_oauth_auth()
-            else:
-                return await self.async_step_manual_token()
+            self._session = async_get_clientsession(self.hass)
+            # Generate PKCE code verifier and challenge
+            self._code_verifier = secrets.token_urlsafe(64)[:128]
+            code_challenge = self._generate_code_challenge(self._code_verifier)
+            
+            # Generate authorization URL
+            self._auth_url = self._get_authorization_url(code_challenge)
+            
+            return await self.async_step_oauth_auth()
                 
         # Present user with choice of authentication methods
         return self.async_show_form(
             step_id="auth_method",
             data_schema=vol.Schema({
-                vol.Required("auth_method", default="oauth"): vol.In({
-                    "oauth": "Use OAuth (copy-paste code)",
-                    "manual": "Enter token manually"
-                })
+                vol.Required("auth_method", default="oauth"): vol.In({"oauth": "Use OAuth"})
             }),
             errors=errors,
         )
@@ -111,8 +104,9 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "1. Click the link below to authorize Drinkaware\n"
                         "2. Log in with your Drinkaware credentials\n"
                         "3. After successful login, you'll be redirected to a page that won't load (this is normal)\n"
-                        "4. Copy the ENTIRE URL or redirect text from your browser or dev tools\n"
-                        "5. Click Submit below and paste the full redirect URL in the next step"
+                        "4. Open your browser's Developer Tools (press F12), go to the Network tab\n"
+                        "5. Find the request with 'callback' in the name, right-click and select 'Copy URL'\n"
+                        "6. Click Submit below and paste the full redirect URL in the next step"
                     )
                 },
             )
@@ -171,65 +165,10 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }),
             errors=errors,
             description_placeholders={
-                "instructions": "Paste the entire redirect URL or text from your browser or dev tools"
-            },
-        )
-
-    async def async_step_manual_token(self, user_input=None):
-        """Handle manual token entry."""
-        errors = {}
-        
-        if user_input is not None:
-            self._session = async_get_clientsession(self.hass)
-            
-            token = user_input.get("token")
-            
-            try:
-                # Extract user info from token
-                user_info = self._parse_jwt(token)
-                self._user_id = user_info.get("sub", "unknown")
-                email = user_info.get("email", "unknown")
-                
-                # Check if this account is already configured
-                await self.async_set_unique_id(self._user_id)
-                self._abort_if_unique_id_configured()
-                
-                # Test API connection with token
-                if await self._test_api_connection(token):
-                    # Create a token_data structure 
-                    token_data = {
-                        "access_token": token,
-                        "token_type": "Bearer",
-                        "expires_in": 3600 * 24 * 30,  # Set a long expiry
-                    }
-                    
-                    return self.async_create_entry(
-                        title=f"Drinkaware - {self._account_name}",
-                        data={
-                            "token": token_data,
-                            "account_name": self._account_name,
-                            "user_id": self._user_id,
-                            "email": email,
-                        },
-                    )
-                else:
-                    errors["base"] = "invalid_token"
-            except Exception as err:
-                _LOGGER.error("Error testing token: %s", err)
-                errors["base"] = "cannot_connect"
-
-        return self.async_show_form(
-            step_id="manual_token",
-            data_schema=vol.Schema({
-                vol.Required("token"): str,
-            }),
-            errors=errors,
-            description_placeholders={
                 "instructions": (
-                    "Enter a valid authentication token from the Drinkaware app. "
-                    "You can extract this using a tool like MITM Proxy to capture API "
-                    "requests from the app. Look for the 'Authorization: Bearer' header "
-                    "and copy everything after 'Bearer '."
+                    "Paste the URL you copied from the Network tab in Developer Tools.\n"
+                    "It should start with 'uk.co.drinkaware.drinkaware://oauth/callback' and include a code parameter.\n"
+                    "If you can't find it, go back and look for a canceled/redirected request in the Network tab."
                 )
             },
         )
