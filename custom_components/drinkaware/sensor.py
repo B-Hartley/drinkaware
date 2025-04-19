@@ -3,7 +3,7 @@ Sensor platform for Drinkaware integration.
 """
 import logging
 from typing import Callable, Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from homeassistant.components.sensor import (
     SensorEntity,
@@ -192,8 +192,18 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
             
         elif key == "weekly_units" and "summary" in self.coordinator.data:
             total_units = 0
+            # Get current date in the same format as in the API (YYYY-MM-DD)
+            today = datetime.now().strftime("%Y-%m-%d")
+            # Calculate the date 6 days ago (which gives us 7 days including today)
+            six_days_ago = (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d")
+            
+            # Filter and sum only the units from the last 7 days
             for day in self.coordinator.data["summary"]:
-                total_units += day.get("units", 0)
+                day_date = day.get("date", "")
+                # Include only dates that are within the last 7 days
+                if day_date >= six_days_ago and day_date <= today:
+                    total_units += day.get("units", 0)
+            
             return round(total_units, 1)
             
         elif key == "last_drink_date" and "summary" in self.coordinator.data:
@@ -300,6 +310,15 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                         "Drinks": day.get("drinks", 0),
                         "Drink Free": day.get("drinkFreeDay", True)
                     }
+            
+            # Add additional information about the weekly calculation period
+            today = datetime.now().strftime("%Y-%m-%d")
+            six_days_ago = (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d")
+            attrs["Weekly Period"] = {
+                "Start Date": six_days_ago,
+                "End Date": today,
+                "Days Included": 7
+            }
         
         elif key == "drinks_today":
             today = datetime.now().strftime("%Y-%m-%d")
