@@ -132,7 +132,7 @@
       "fields": {
         "account_name": {
           "name": "Account Name",
-          "description": "The name of your Drinkaware account (as entered during setup)"
+          "description": "The name of your Drinkaware account (as entered during setup) - leave empty to refresh all accounts"
         },
         "entry_id": {
           "name": "Config Entry ID",

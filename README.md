@@ -165,3 +165,8 @@ This integration is not officially affiliated with or endorsed by the Drinkaware
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Version History
+
+- **0.1.7** - Fixed issues with custom drink measure descriptions and drink-free day functionality
+- **0.1.6** - Previous release

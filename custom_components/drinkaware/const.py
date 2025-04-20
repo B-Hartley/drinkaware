@@ -34,7 +34,6 @@ SERVICE_DELETE_DRINK = "delete_drink"
 SERVICE_REMOVE_DRINK_FREE_DAY = "remove_drink_free_day"
 SERVICE_LOG_SLEEP_QUALITY = "log_sleep_quality"
 SERVICE_REFRESH = "refresh"
-SERVICE_CREATE_CUSTOM_MEASURE = "create_custom_measure"
 
 # Service attributes
 ATTR_ENTRY_ID = "entry_id"
@@ -44,8 +43,6 @@ ATTR_DRINK_MEASURE = "measure_id"
 ATTR_DRINK_ABV = "abv"
 ATTR_DRINK_QUANTITY = "quantity"
 ATTR_SLEEP_QUALITY = "quality"
-ATTR_MEASURE_SIZE = "measure_size"
-ATTR_MEASURE_TITLE = "measure_title"
 
 # Sensor names
 RISK_LEVEL = "risk_level"

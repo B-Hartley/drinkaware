@@ -5,7 +5,7 @@ log_drink_free_day:
     account_name:
       name: Account Name
       description: The name of your Drinkaware account (as entered during setup)
-      required: false
+      required: true
       example: "Bruce"
       selector:
         text:
@@ -40,7 +40,7 @@ log_drink:
     account_name:
       name: Account Name
       description: The name of your Drinkaware account (as entered during setup)
-      required: false
+      required: true
       example: "Bruce"
       selector:
         text:
@@ -155,7 +155,6 @@ log_drink:
       name: Quantity
       description: The number of drinks of this type (defaults to 1)
       required: false
-      default: 1
       example: 2
       selector:
         number:
@@ -185,7 +184,7 @@ delete_drink:
     account_name:
       name: Account Name
       description: The name of your Drinkaware account (as entered during setup)
-      required: false
+      required: true
       example: "Bruce"
       selector:
         text:
@@ -300,7 +299,7 @@ remove_drink_free_day:
     account_name:
       name: Account Name
       description: The name of your Drinkaware account (as entered during setup)
-      required: false
+      required: true
       example: "Bruce"
       selector:
         text:
@@ -327,7 +326,7 @@ log_sleep_quality:
     account_name:
       name: Account Name
       description: The name of your Drinkaware account (as entered during setup)
-      required: false
+      required: true
       example: "Bruce"
       selector:
         text:
@@ -368,7 +367,7 @@ refresh:
   fields:
     account_name:
       name: Account Name
-      description: The name of your Drinkaware account (as entered during setup)
+      description: The name of your Drinkaware account (as entered during setup) - leave empty to refresh all accounts
       required: false
       example: "Bruce"
       selector:
@@ -381,41 +380,3 @@ refresh:
       selector:
         config_entry:
           integration: drinkaware
-
-create_custom_measure:
-  name: Create custom measure
-  description: Create a custom measure size for drinks
-  fields:
-    account_name:
-      name: Account Name
-      description: The name of your Drinkaware account (as entered during setup)
-      required: false
-      example: "Bruce"
-      selector:
-        text:
-    entry_id:
-      name: Config Entry ID
-      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
-      required: false
-      example: "abc123"
-      selector:
-        config_entry:
-          integration: drinkaware
-    measure_size:
-      name: Measure Size
-      description: The size of the measure in liters (e.g., 0.2 for 200ml)
-      required: true
-      example: 0.2
-      selector:
-        number:
-          min: 0.01
-          max: 1.0
-          step: 0.001
-          unit_of_measurement: "L"
-    measure_title:
-      name: Measure Title
-      description: The display name for the measure
-      required: true
-      example: "Mini bottle (200ml)"
-      selector:
-        text:      

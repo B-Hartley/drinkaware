@@ -214,6 +214,16 @@ To find the ID of a custom drink:
 - Look for the `drinkId` parameter when a drink is added
 - The "Drinks Today" sensor can also help by showing the raw drink data in its attributes
 
+### Custom Drinks in Home Assistant UI
+
+Once you create a custom drink either in the app or via the services, these custom drinks should appear in the dropdown menus in the Home Assistant UI service call panel. If they don't appear immediately:
+
+1. Try refreshing Home Assistant (not a full restart)
+2. Use the `refresh` service to update the drinks cache
+3. The custom drinks will be shown with "(Custom)" suffix in the dropdown
+
+Note that in versions before 0.1.7, there were issues with custom drink measures not showing their descriptions properly.
+
 ### Using Custom Drinks
 
 If you have identified a custom drink ID:

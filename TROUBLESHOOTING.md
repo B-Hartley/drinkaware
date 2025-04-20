@@ -93,6 +93,29 @@ This guide covers common issues you might encounter with the Drinkaware integrat
 3. If drinks were just added, wait a few minutes for the data to update
 4. Check the Home Assistant logs for any errors related to fetching activity data
 
+### Custom drink measures show no description
+
+**Problem:** When creating a drink with a custom ABV, the measure descriptions don't appear correctly.
+
+**Solution:**
+This issue has been fixed in version 0.1.7+. If you're still experiencing this:
+1. Make sure you've updated to the latest version of the integration
+2. Try removing the custom drink and creating it again
+3. If adding a custom drink through the service, ensure the measure_id is compatible with the drink type
+
+### "Failed to log drink-free day: Cannot set drink-free day if day has drinks added"
+
+**Problem:** You're trying to set a drink-free day for a date that already has drinks logged, or the automatic removal of drinks isn't working.
+
+**Solution:**
+1. Set the `remove_drinks` parameter to `true` when calling the service:
+   ```yaml
+   service: drinkaware.log_drink_free_day
+   data:
+     account_name: "Bruce"
+     date: "2025-04-18"
+     remove_drinks: true
+	 
 ## Debug Logging
 
 To enable detailed debug logging for the integration:
