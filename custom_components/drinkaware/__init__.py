@@ -28,6 +28,7 @@ from .const import (
     ENDPOINT_STATS,
     ENDPOINT_GOALS,
     ENDPOINT_SUMMARY,
+    ENDPOINT_DRINKS_GENERIC,
 )
 from .services import async_setup_services, async_unload_services
 from .utils import get_entry_id_by_account_name
@@ -57,12 +58,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass, session, token_data, entry.entry_id, account_name, email
     )
     
+    # Store coordinator in hass.data first so it's available for service schema providers
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][entry.entry_id] = coordinator
+    
     # Fetch initial data
     await coordinator.async_config_entry_first_refresh()
     
-    # Store coordinator in hass.data
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = coordinator
+    # Ensure we fetch drinks data for service dropdown menus
+    if coordinator.drinks_cache is None:
+        try:
+            coordinator.drinks_cache = await coordinator._fetch_available_drinks()
+            _LOGGER.info("Successfully fetched available drinks for service dropdowns")
+        except Exception as err:
+            _LOGGER.warning("Error pre-fetching drinks data: %s", err)
     
     # Set up platforms - Using async_forward_entry_setups
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -113,6 +122,7 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
         self.email = email
         self._rate_limited = False
         self._activity_cache = {}  # Cache for detailed activity data
+        self.drinks_cache = None   # Cache for available drinks
 
     async def _async_update_data(self):
         """Fetch data from Drinkaware API."""
@@ -165,6 +175,12 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
                         if today_activity:
                             self._activity_cache[today] = today_activity
                         break
+            
+            # Fetch available drinks if not already cached
+            if self.drinks_cache is None:
+                drinks = await self._fetch_available_drinks()
+                if drinks:
+                    self.drinks_cache = drinks
             
             # Reset rate limit flag if successful    
             self._rate_limited = False
@@ -277,6 +293,11 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
     async def _fetch_activity_for_day(self, date_str):
         """Fetch detailed activity data for a specific day."""
         url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
+        return await self._make_api_request(url)
+    
+    async def _fetch_available_drinks(self):
+        """Fetch available drinks from Drinkaware API."""
+        url = f"{API_BASE_URL}{ENDPOINT_DRINKS_GENERIC}"
         return await self._make_api_request(url)
         
     async def _make_api_request(self, url, params=None):

@@ -35,62 +35,11 @@ from .utils import get_entry_id_by_account_name
 
 _LOGGER = logging.getLogger(__name__)
 
-# Create a validator for requiring exactly one of entry_id or account_name
 def require_entry_id_or_account_name(value):
     """Validate that either entry_id or account_name is provided."""
     if ATTR_ENTRY_ID not in value and ATTR_ACCOUNT_NAME not in value:
         raise vol.Invalid("Either entry_id or account_name must be provided")
     return value
-
-# Base dictionary for all Drinkaware service calls
-BASE_DICT = {
-    vol.Optional(ATTR_ENTRY_ID): cv.string,
-    vol.Optional(ATTR_ACCOUNT_NAME): cv.string,
-}
-
-# Function to create schema with validation
-def create_schema(schema_dict):
-    """Create a schema with the base validation."""
-    return vol.Schema(vol.All(schema_dict, require_entry_id_or_account_name))
-
-# Schemas for service calls
-DRINK_FREE_DAY_SCHEMA = create_schema({
-    **BASE_DICT,
-    vol.Optional(ATTR_DATE): cv.date,
-    vol.Optional("remove_drinks", default=False): cv.boolean,
-})
-
-LOG_DRINK_SCHEMA = create_schema({
-    **BASE_DICT,
-    vol.Required(ATTR_DRINK_TYPE): cv.string,  # This would be the drink ID from API
-    vol.Required(ATTR_DRINK_MEASURE): cv.string,  # This would be the measure ID from API
-    vol.Optional(ATTR_DRINK_ABV, default=0): vol.Coerce(float),
-    vol.Optional(ATTR_DRINK_QUANTITY, default=1): vol.Coerce(int),
-    vol.Optional(ATTR_DATE): cv.date,
-    vol.Optional("auto_remove_dfd", default=False): cv.boolean,
-})
-
-DELETE_DRINK_SCHEMA = create_schema({
-    **BASE_DICT,
-    vol.Required(ATTR_DRINK_TYPE): cv.string,
-    vol.Required(ATTR_DRINK_MEASURE): cv.string,
-    vol.Optional(ATTR_DATE): cv.date,
-})
-
-REMOVE_DRINK_FREE_DAY_SCHEMA = create_schema({
-    **BASE_DICT,
-    vol.Optional(ATTR_DATE): cv.date,
-})
-
-LOG_SLEEP_QUALITY_SCHEMA = create_schema({
-    **BASE_DICT,
-    vol.Required(ATTR_SLEEP_QUALITY): vol.In(["poor", "average", "great"]),
-    vol.Optional(ATTR_DATE): cv.date,
-})
-
-REFRESH_SCHEMA = create_schema({
-    **BASE_DICT,
-})
 
 def get_coordinator_by_name_or_id(hass, entry_id=None, account_name=None):
     """Get coordinator by either entry_id or account_name."""
@@ -122,6 +71,16 @@ def get_coordinator_by_name_or_id(hass, entry_id=None, account_name=None):
 
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Set up services for Drinkaware integration."""
+    
+    # Import the dynamic schema providers
+    from .dynamic_services import (
+        async_get_drink_free_day_schema,
+        async_get_log_drink_schema,
+        async_get_delete_drink_schema,
+        async_get_remove_drink_free_day_schema,
+        async_get_log_sleep_quality_schema,
+        async_get_refresh_schema,
+    )
     
     async def async_log_drink_free_day(service_call) -> None:
         """Log a drink-free day to Drinkaware."""
@@ -253,8 +212,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if not coordinator:
             raise HomeAssistantError(
                 "No matching Drinkaware integration found. Please specify a valid entry_id or account_name"
-            )
-            
+            )            
         try:
             # If auto_remove_dfd is True, check if day is marked as drink-free and remove that mark first
             if auto_remove_dfd:
@@ -440,29 +398,78 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             _LOGGER.error("Error refreshing Drinkaware data: %s", err)
             raise HomeAssistantError(f"Error refreshing Drinkaware data: {err}")
 
+    # Register services with validation
+    drink_free_day_schema = vol.Schema(vol.All(
+        async_get_drink_free_day_schema(hass),
+        require_entry_id_or_account_name
+    ))
+    
+    log_drink_schema = vol.Schema(vol.All(
+        async_get_log_drink_schema(hass),
+        require_entry_id_or_account_name
+    ))
+    
+    delete_drink_schema = vol.Schema(vol.All(
+        async_get_delete_drink_schema(hass),
+        require_entry_id_or_account_name
+    ))
+    
+    remove_drink_free_day_schema = vol.Schema(vol.All(
+        async_get_remove_drink_free_day_schema(hass),
+        require_entry_id_or_account_name
+    ))
+    
+    log_sleep_quality_schema = vol.Schema(vol.All(
+        async_get_log_sleep_quality_schema(hass),
+        require_entry_id_or_account_name
+    ))
+    
+    refresh_schema = vol.Schema(vol.All(
+        async_get_refresh_schema(hass),
+        require_entry_id_or_account_name
+    ))
+    
     # Register services
     hass.services.async_register(
-        DOMAIN, SERVICE_LOG_DRINK_FREE_DAY, async_log_drink_free_day, schema=DRINK_FREE_DAY_SCHEMA
+        DOMAIN, 
+        SERVICE_LOG_DRINK_FREE_DAY, 
+        async_log_drink_free_day, 
+        schema=drink_free_day_schema,
     )
     
     hass.services.async_register(
-        DOMAIN, SERVICE_LOG_DRINK, async_log_drink, schema=LOG_DRINK_SCHEMA
+        DOMAIN, 
+        SERVICE_LOG_DRINK, 
+        async_log_drink, 
+        schema=log_drink_schema,
     )
     
     hass.services.async_register(
-        DOMAIN, SERVICE_DELETE_DRINK, async_delete_drink, schema=DELETE_DRINK_SCHEMA
+        DOMAIN, 
+        SERVICE_DELETE_DRINK, 
+        async_delete_drink, 
+        schema=delete_drink_schema,
     )
     
     hass.services.async_register(
-        DOMAIN, SERVICE_REMOVE_DRINK_FREE_DAY, async_remove_drink_free_day, schema=REMOVE_DRINK_FREE_DAY_SCHEMA
+        DOMAIN, 
+        SERVICE_REMOVE_DRINK_FREE_DAY, 
+        async_remove_drink_free_day, 
+        schema=remove_drink_free_day_schema,
     )
     
     hass.services.async_register(
-        DOMAIN, SERVICE_LOG_SLEEP_QUALITY, async_log_sleep_quality, schema=LOG_SLEEP_QUALITY_SCHEMA
+        DOMAIN, 
+        SERVICE_LOG_SLEEP_QUALITY, 
+        async_log_sleep_quality, 
+        schema=log_sleep_quality_schema,
     )
     
     hass.services.async_register(
-        DOMAIN, SERVICE_REFRESH, async_refresh, schema=REFRESH_SCHEMA
+        DOMAIN, 
+        SERVICE_REFRESH, 
+        async_refresh, 
+        schema=refresh_schema,
     )
 
 async def async_unload_services(hass: HomeAssistant) -> None:
@@ -474,10 +481,55 @@ async def async_unload_services(hass: HomeAssistant) -> None:
     hass.services.async_remove(DOMAIN, SERVICE_LOG_SLEEP_QUALITY)
     hass.services.async_remove(DOMAIN, SERVICE_REFRESH)
 
+async def create_custom_drink(coordinator, drink_type, title, abv):
+    """Create a custom drink with a specific ABV."""
+    url = f"{API_BASE_URL}/drinks/v1/custom"
+    
+    headers = {
+        "Authorization": f"Bearer {coordinator.access_token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    
+    payload = {
+        "derivedDrinkId": drink_type,
+        "title": title,
+        "abv": abv
+    }
+    
+    async with coordinator.session.post(url, headers=headers, json=payload) as resp:
+        if resp.status != 200:
+            text = await resp.text()
+            _LOGGER.error(f"Error creating custom drink: {resp.status} - {text}")
+            raise Exception(f"Failed to create custom drink: {resp.status} - {text}")
+        
+        result = await resp.json()
+        _LOGGER.info(f"Successfully created custom drink with ID: {result.get('drinkId')}")
+        return result.get("drinkId")
 
 async def add_drink(coordinator, drink_type, drink_measure, abv, date):
     """Add a single drink to Drinkaware using quantityAdjustment."""
     date_str = date.strftime("%Y-%m-%d")
+    
+    # If custom ABV specified, create a custom drink first
+    if abv:
+        try:
+            # Get original drink info to get the title
+            # For simplicity, we'll use the drink_type as the title if we can't find the original
+            title = "Custom Drink"
+            if hasattr(coordinator, 'drinks_cache') and coordinator.drinks_cache:
+                for category in coordinator.drinks_cache.get("categories", []):
+                    for drink in category.get("drinks", []):
+                        if drink.get("drinkId") == drink_type:
+                            title = drink.get("title", "Custom Drink")
+                            break
+            
+            # Create custom drink
+            custom_drink_id = await create_custom_drink(coordinator, drink_type, title, abv)
+            # Use the custom drink ID instead of the original
+            drink_type = custom_drink_id
+        except Exception as err:
+            _LOGGER.warning(f"Failed to create custom drink with ABV {abv}, using standard drink: {err}")
     
     url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
     
@@ -494,10 +546,6 @@ async def add_drink(coordinator, drink_type, drink_measure, abv, date):
         "quantityAdjustment": 1  # Add one drink
     }
     
-    # If user provided a custom ABV, include it
-    if abv > 0:
-        payload["abv"] = abv
-    
     async with coordinator.session.post(url, headers=headers, json=payload) as resp:
         if resp.status not in (200, 204):
             text = await resp.text()
@@ -511,6 +559,26 @@ async def add_drink(coordinator, drink_type, drink_measure, abv, date):
 async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quantity, date):
     """Set the absolute quantity of a drink type for a specific day."""
     date_str = date.strftime("%Y-%m-%d")
+    
+    # If custom ABV specified, create a custom drink first
+    if abv:
+        try:
+            # Get original drink info to get the title
+            # For simplicity, we'll use the drink_type as the title if we can't find the original
+            title = "Custom Drink"
+            if hasattr(coordinator, 'drinks_cache') and coordinator.drinks_cache:
+                for category in coordinator.drinks_cache.get("categories", []):
+                    for drink in category.get("drinks", []):
+                        if drink.get("drinkId") == drink_type:
+                            title = drink.get("title", "Custom Drink")
+                            break
+            
+            # Create custom drink
+            custom_drink_id = await create_custom_drink(coordinator, drink_type, title, abv)
+            # Use the custom drink ID instead of the original
+            drink_type = custom_drink_id
+        except Exception as err:
+            _LOGGER.warning(f"Failed to create custom drink with ABV {abv}, using standard drink: {err}")
     
     url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
     
@@ -527,10 +595,6 @@ async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quanti
         "quantity": quantity  # Set absolute quantity
     }
     
-    # If user provided a custom ABV, include it
-    if abv > 0:
-        payload["abv"] = abv
-    
     async with coordinator.session.put(url, headers=headers, json=payload) as resp:
         if resp.status not in (200, 204):
             text = await resp.text()
@@ -540,7 +604,6 @@ async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quanti
         result = await resp.json()
         _LOGGER.info(f"Successfully set drink quantity for {date_str} to {result.get('quantity', 0)}")
         return True
-
 
 async def remove_drink_free_day(coordinator, date):
     """Remove a drink-free day marking from Drinkaware."""
@@ -563,7 +626,6 @@ async def remove_drink_free_day(coordinator, date):
         
         _LOGGER.info("Successfully removed drink-free day for %s", date_str)
         return True
-
 
 async def log_sleep_quality(coordinator, quality, date):
     """Log sleep quality to Drinkaware."""

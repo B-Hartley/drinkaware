@@ -96,6 +96,10 @@ log_drink:
               value: "61AD633A-7366-4497-BD36-9078466F00FE"
             - label: "Alcopop (4.0% ABV)"
               value: "0B2A65CA-5EC4-46B6-9E4D-6E0DDC8D57B8"
+            - label: "Custom Drink (Enter ID directly)"
+              value: "custom"
+          mode: dropdown
+          custom_value: true
     measure_id:
       name: Measure Type
       description: The measure to use
@@ -132,6 +136,10 @@ log_drink:
               value: "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1"
             - label: "Small port/sherry glass (75ml)"
               value: "021703DD-248C-4A51-ACFD-0CE97540C8EC"
+            - label: "Custom Measure (Enter ID directly)"
+              value: "custom"
+          mode: dropdown
+          custom_value: true
     abv:
       name: ABV
       description: The alcohol percentage (optional, will use default if not specified)
@@ -233,6 +241,10 @@ delete_drink:
               value: "61AD633A-7366-4497-BD36-9078466F00FE"
             - label: "Alcopop (4.0% ABV)"
               value: "0B2A65CA-5EC4-46B6-9E4D-6E0DDC8D57B8"
+            - label: "Custom Drink (Enter ID directly)"
+              value: "custom"
+          mode: dropdown
+          custom_value: true
     measure_id:
       name: Measure Type
       description: The measure ID of the drink to delete
@@ -269,6 +281,10 @@ delete_drink:
               value: "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1"
             - label: "Small port/sherry glass (75ml)"
               value: "021703DD-248C-4A51-ACFD-0CE97540C8EC"
+            - label: "Custom Measure (Enter ID directly)"
+              value: "custom"
+          mode: dropdown
+          custom_value: true
     date:
       name: Date
       description: The date the drink was logged (defaults to today)
@@ -337,6 +353,7 @@ log_sleep_quality:
               value: "average"
             - label: "Great"
               value: "great"
+          mode: dropdown
     date:
       name: Date
       description: The date to log the sleep quality (defaults to today)
@@ -364,3 +381,41 @@ refresh:
       selector:
         config_entry:
           integration: drinkaware
+
+create_custom_measure:
+  name: Create custom measure
+  description: Create a custom measure size for drinks
+  fields:
+    account_name:
+      name: Account Name
+      description: The name of your Drinkaware account (as entered during setup)
+      required: false
+      example: "Bruce"
+      selector:
+        text:
+    entry_id:
+      name: Config Entry ID
+      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
+      required: false
+      example: "abc123"
+      selector:
+        config_entry:
+          integration: drinkaware
+    measure_size:
+      name: Measure Size
+      description: The size of the measure in liters (e.g., 0.2 for 200ml)
+      required: true
+      example: 0.2
+      selector:
+        number:
+          min: 0.01
+          max: 1.0
+          step: 0.001
+          unit_of_measurement: "L"
+    measure_title:
+      name: Measure Title
+      description: The display name for the measure
+      required: true
+      example: "Mini bottle (200ml)"
+      selector:
+        text:      
