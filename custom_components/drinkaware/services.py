@@ -33,7 +33,16 @@ from .const import (
 )
 
 from .utils import get_entry_id_by_account_name
-from .dynamic_services import DEFAULT_ABV_VALUES
+from .dynamic_services import (
+    DEFAULT_ABV_VALUES,
+    update_last_used_account,
+    async_get_drink_free_day_schema,
+    async_get_log_drink_schema,
+    async_get_delete_drink_schema,
+    async_get_remove_drink_free_day_schema,
+    async_get_log_sleep_quality_schema,
+    async_get_refresh_schema,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,12 +73,16 @@ def require_entry_id_or_account_name(value):
 def get_coordinator_by_name_or_id(hass, entry_id=None, account_name=None):
     """Get coordinator by either entry_id or account_name."""
     if entry_id and entry_id in hass.data[DOMAIN]:
-        return hass.data[DOMAIN][entry_id]
+        coordinator = hass.data[DOMAIN][entry_id]
+        if hasattr(coordinator, 'account_name'):
+            update_last_used_account(coordinator.account_name)
+        return coordinator
     
     if account_name:
         # Check the account name map first for more efficient lookup
         mapped_entry_id = get_entry_id_by_account_name(hass, account_name)
         if mapped_entry_id and mapped_entry_id in hass.data[DOMAIN]:
+            update_last_used_account(account_name)
             return hass.data[DOMAIN][mapped_entry_id]
             
         # Fallback to searching if not in the map
@@ -77,6 +90,7 @@ def get_coordinator_by_name_or_id(hass, entry_id=None, account_name=None):
             if entry_id == "account_name_map":
                 continue  # Skip the mapping dictionary
             if hasattr(coordinator, 'account_name') and coordinator.account_name.lower() == account_name.lower():
+                update_last_used_account(account_name)
                 return coordinator
     
     # If we have only one entry, return that
@@ -85,22 +99,15 @@ def get_coordinator_by_name_or_id(hass, entry_id=None, account_name=None):
         if entry_id != "account_name_map"
     ]
     if len(entries) == 1:
-        return hass.data[DOMAIN][entries[0]]
+        coordinator = hass.data[DOMAIN][entries[0]]
+        if hasattr(coordinator, 'account_name'):
+            update_last_used_account(coordinator.account_name)
+        return coordinator
     
     return None
 
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Set up services for Drinkaware integration."""
-    
-    # Import the dynamic schema providers
-    from .dynamic_services import (
-        async_get_drink_free_day_schema,
-        async_get_log_drink_schema,
-        async_get_delete_drink_schema,
-        async_get_remove_drink_free_day_schema,
-        async_get_log_sleep_quality_schema,
-        async_get_refresh_schema,
-    )
     
     async def async_log_drink_free_day(service_call) -> None:
         """Log a drink-free day to Drinkaware."""
@@ -161,6 +168,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                     
                     _LOGGER.info(f"Found {len(drinks)} drinks to remove")
                     
+                    if not drinks:
+                        _LOGGER.warning("No drinks found in API response, but summary indicates drinks exist")
+                    
                     # Remove each drink individually
                     for drink in drinks:
                         drink_id = drink.get("drinkId")
@@ -180,12 +190,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                                         _LOGGER.info(f"Successfully removed {drink_name}")
                                 
                                 # Add a small delay to prevent rate limiting
-                                await asyncio.sleep(0.2)
+                                await asyncio.sleep(0.5)  # Increased delay to ensure request completes
                             except Exception as err:
                                 _LOGGER.warning(f"Exception removing drink {drink_name}: {err}")
                 
+                # Wait a bit to ensure all deletes are processed
+                await asyncio.sleep(1.0)
+                
                 # Verify all drinks were removed
-                await asyncio.sleep(0.5)  # Small delay to ensure server has processed the requests
                 async with coordinator.session.get(url, headers=headers) as verify_resp:
                     if verify_resp.status == 200:
                         verify_data = await verify_resp.json()
@@ -198,7 +210,8 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                         
                         if remaining_drinks:
                             _LOGGER.warning(f"Still {len(remaining_drinks)} drinks remaining after removal")
-                            # We'll continue anyway rather than raising an error, as the API might still allow marking as drink-free
+                            # If there are still drinks, skip setting drink-free day
+                            raise HomeAssistantError(f"Could not remove all drinks. Please try again.")
                         else:
                             _LOGGER.info(f"Successfully verified all drinks removed for {date_str}")
             
@@ -227,28 +240,38 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         """Log a drink to Drinkaware."""
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
         account_name = service_call.data.get(ATTR_ACCOUNT_NAME)
-        drink_type = service_call.data[ATTR_DRINK_TYPE]
-        drink_measure = service_call.data[ATTR_DRINK_MEASURE]
+        
+        # Get drink ID directly from ATTR_DRINK_TYPE
+        drink_type = service_call.data.get(ATTR_DRINK_TYPE)
+        
+        # Handle "custom" value for drink_id - prompt user to enter the actual ID
+        if drink_type == "custom":
+            raise HomeAssistantError(
+                "When selecting 'Custom Drink ID', please enter the actual ID directly instead of selecting 'custom'"
+            )
+        
+        # Get measure ID
+        drink_measure = service_call.data.get(ATTR_DRINK_MEASURE)
+        if not drink_measure:
+            raise HomeAssistantError("You must specify a measure_id")
+            
+        # Handle "custom" value for measure_id
+        if drink_measure == "custom":
+            raise HomeAssistantError(
+                "When using a custom measure, enter the actual ID instead of selecting 'custom'"
+            )
+        
+        # Get other parameters
         abv = service_call.data.get(ATTR_DRINK_ABV)
         quantity = service_call.data.get(ATTR_DRINK_QUANTITY, 1)  # Default to 1 if not specified
         date = service_call.data.get(ATTR_DATE, datetime.now().date())
-        auto_remove_dfd = service_call.data.get("auto_remove_dfd", False)
-        
-        # Handle "custom" value for drink_type or measure_id
-        if drink_type == "custom":
-            raise HomeAssistantError(
-                "When using a custom drink, enter the actual drink ID instead of selecting 'custom'"
-            )
-        if drink_measure == "custom":
-            raise HomeAssistantError(
-                "When using a custom measure, enter the actual measure ID instead of selecting 'custom'"
-            )
+        auto_remove_dfd = service_call.data.get("auto_remove_dfd", False)  # Default to False
         
         coordinator = get_coordinator_by_name_or_id(hass, entry_id, account_name)
         if not coordinator:
             raise HomeAssistantError(
                 "No matching Drinkaware integration found. Please specify a valid entry_id or account_name"
-            )            
+            )         
         try:
             # If auto_remove_dfd is True, check if day is marked as drink-free and remove that mark first
             if auto_remove_dfd:
@@ -331,14 +354,23 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         """Delete a drink from Drinkaware."""
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
         account_name = service_call.data.get(ATTR_ACCOUNT_NAME)
-        drink_type = service_call.data[ATTR_DRINK_TYPE]
+        
+        # Get drink ID directly from ATTR_DRINK_TYPE
+        drink_type = service_call.data.get(ATTR_DRINK_TYPE)
+        
+        # Handle "custom" value for drink_id - prompt user to enter the actual ID
+        if drink_type == "custom":
+            raise HomeAssistantError(
+                "When selecting 'Custom Drink ID', please enter the actual ID directly instead of selecting 'custom'"
+            )
+        
         drink_measure = service_call.data[ATTR_DRINK_MEASURE]
         date = service_call.data.get(ATTR_DATE, datetime.now().date())
         
-        # Handle "custom" value for drink_type or measure_id
-        if drink_type == "custom" or drink_measure == "custom":
+        # Handle "custom" value for measure_id
+        if drink_measure == "custom":
             raise HomeAssistantError(
-                "When using a custom drink/measure, enter the actual ID instead of selecting 'custom'"
+                "When using a custom measure, enter the actual ID instead of selecting 'custom'"
             )
         
         coordinator = get_coordinator_by_name_or_id(hass, entry_id, account_name)
@@ -787,4 +819,4 @@ async def log_sleep_quality(coordinator, quality, date):
             raise Exception(f"Failed to log sleep quality: {resp.status} - {text}")
         
         _LOGGER.info("Successfully logged sleep quality for %s", date_str)
-        return True            
+        return True                                

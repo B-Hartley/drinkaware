@@ -43,6 +43,8 @@ ATTR_DRINK_MEASURE = "measure_id"
 ATTR_DRINK_ABV = "abv"
 ATTR_DRINK_QUANTITY = "quantity"
 ATTR_SLEEP_QUALITY = "quality"
+ATTR_STANDARD_DRINK = "standard_drink"
+ATTR_CUSTOM_DRINK_ID = "custom_drink_id"
 
 # Sensor names
 RISK_LEVEL = "risk_level"

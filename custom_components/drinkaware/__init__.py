@@ -69,6 +69,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if coordinator.drinks_cache is None:
         try:
             coordinator.drinks_cache = await coordinator._fetch_available_drinks()
+            
+            # Also fetch search results to get custom drinks
+            custom_drinks = await coordinator._fetch_search_drinks()
+            if custom_drinks and "results" in custom_drinks:
+                if "customDrinks" not in coordinator.drinks_cache:
+                    coordinator.drinks_cache["customDrinks"] = []
+                
+                # Add relevant search results to cache
+                for drink in custom_drinks["results"]:
+                    if "derivedDrinkId" in drink:
+                        coordinator.drinks_cache["customDrinks"].append(drink)
+                        
             _LOGGER.info("Successfully fetched available drinks for service dropdowns")
         except Exception as err:
             _LOGGER.warning("Error pre-fetching drinks data: %s", err)
@@ -92,7 +104,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass.data[DOMAIN].pop(entry.entry_id)
     
     # Check if this is the last entry being removed
-    if not hass.data[DOMAIN]:
+    remaining_entries = [e for e in hass.data[DOMAIN] if e != "account_name_map"]
+    if not remaining_entries:
         await async_unload_services(hass)
         
     return unload_ok
@@ -123,6 +136,7 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
         self._rate_limited = False
         self._activity_cache = {}  # Cache for detailed activity data
         self.drinks_cache = None   # Cache for available drinks
+        self._last_drinks_refresh = datetime.now()  # Track when we last refreshed drinks
 
     async def _async_update_data(self):
         """Fetch data from Drinkaware API."""
@@ -176,11 +190,32 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
                             self._activity_cache[today] = today_activity
                         break
             
-            # Fetch available drinks if not already cached
-            if self.drinks_cache is None:
+            # Fetch available drinks if not already cached or refresh occasionally
+            time_since_refresh = (datetime.now() - self._last_drinks_refresh).total_seconds() / 3600
+            if self.drinks_cache is None or time_since_refresh > 6:  # Refresh every 6 hours
+                # First get generic drinks
                 drinks = await self._fetch_available_drinks()
                 if drinks:
                     self.drinks_cache = drinks
+                    
+                # Now get custom drinks through search
+                custom_drinks = await self._fetch_search_drinks()
+                if custom_drinks and "results" in custom_drinks:
+                    if "customDrinks" not in self.drinks_cache:
+                        self.drinks_cache["customDrinks"] = []
+                    
+                    # Add relevant search results to cache
+                    for drink in custom_drinks["results"]:
+                        if "derivedDrinkId" in drink:
+                            # Only add if not already in the cache
+                            drink_id = drink.get("drinkId")
+                            existing_ids = [d.get("drinkId") for d in self.drinks_cache.get("customDrinks", [])]
+                            if drink_id and drink_id not in existing_ids:
+                                self.drinks_cache["customDrinks"].append(drink)
+                
+                # Store timestamp of this refresh
+                self._last_drinks_refresh = datetime.now()
+                _LOGGER.debug("Refreshed drinks cache for %s", self.account_name)
             
             # Reset rate limit flag if successful    
             self._rate_limited = False
@@ -299,6 +334,16 @@ class DrinkAwareDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch available drinks from Drinkaware API."""
         url = f"{API_BASE_URL}{ENDPOINT_DRINKS_GENERIC}"
         return await self._make_api_request(url)
+    
+    async def _fetch_search_drinks(self):
+        """Fetch custom drinks from search API."""
+        url = f"{API_BASE_URL}/drinks/v1/search"
+        params = {
+            "page": 1,
+            "resultsPerPage": 15,
+            "query": ""  # Empty query returns recently used drinks
+        }
+        return await self._make_api_request(url, params)
         
     async def _make_api_request(self, url, params=None):
         """Make authenticated request to Drinkaware API."""

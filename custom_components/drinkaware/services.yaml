@@ -54,9 +54,9 @@ log_drink:
           integration: drinkaware
     drink_id:
       name: Drink Type
-      description: The drink type to log
+      description: "The drink type to log. Select from standard options or enter a custom ID."
       required: true
-      example: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"
+      example: "Lager"
       selector:
         select:
           options:
@@ -96,15 +96,14 @@ log_drink:
               value: "61AD633A-7366-4497-BD36-9078466F00FE"
             - label: "Alcopop (4.0% ABV)"
               value: "0B2A65CA-5EC4-46B6-9E4D-6E0DDC8D57B8"
-            - label: "Custom Drink (Enter ID directly)"
+            - label: "Custom Drink ID"
               value: "custom"
           mode: dropdown
-          custom_value: true
     measure_id:
       name: Measure Type
-      description: The measure to use
+      description: "The measure to use"
       required: true
-      example: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+      example: "Pint"
       selector:
         select:
           options:
@@ -136,10 +135,9 @@ log_drink:
               value: "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1"
             - label: "Small port/sherry glass (75ml)"
               value: "021703DD-248C-4A51-ACFD-0CE97540C8EC"
-            - label: "Custom Measure (Enter ID directly)"
+            - label: "Custom measure ID"
               value: "custom"
           mode: dropdown
-          custom_value: true
     abv:
       name: ABV
       description: The alcohol percentage (optional, will use default if not specified)
@@ -198,7 +196,7 @@ delete_drink:
           integration: drinkaware
     drink_id:
       name: Drink Type
-      description: The drink type to delete
+      description: "The drink type to delete. Select from standard options or enter a custom ID."
       required: true
       example: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"
       selector:
@@ -240,15 +238,14 @@ delete_drink:
               value: "61AD633A-7366-4497-BD36-9078466F00FE"
             - label: "Alcopop (4.0% ABV)"
               value: "0B2A65CA-5EC4-46B6-9E4D-6E0DDC8D57B8"
-            - label: "Custom Drink (Enter ID directly)"
+            - label: "Custom Drink ID"
               value: "custom"
           mode: dropdown
-          custom_value: true
     measure_id:
       name: Measure Type
-      description: The measure ID of the drink to delete
+      description: "The measure of the drink to delete"
       required: true
-      example: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+      example: "Pint"
       selector:
         select:
           options:
@@ -280,10 +277,9 @@ delete_drink:
               value: "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1"
             - label: "Small port/sherry glass (75ml)"
               value: "021703DD-248C-4A51-ACFD-0CE97540C8EC"
-            - label: "Custom Measure (Enter ID directly)"
+            - label: "Custom measure ID"
               value: "custom"
           mode: dropdown
-          custom_value: true
     date:
       name: Date
       description: The date the drink was logged (defaults to today)
@@ -291,7 +287,7 @@ delete_drink:
       example: "2025-04-18"
       selector:
         date:
-
+        
 remove_drink_free_day:
   name: Remove drink-free day
   description: Remove the drink-free day marking for a specific date

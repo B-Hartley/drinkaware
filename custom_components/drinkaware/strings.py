@@ -36,7 +36,7 @@
         },
         "drink_id": {
           "name": "Drink Type",
-          "description": "The drink type to log"
+          "description": "The drink type to log. Select from standard options or enter a custom ID."
         },
         "measure_id": {
           "name": "Measure Type",
@@ -74,11 +74,11 @@
         },
         "drink_id": {
           "name": "Drink Type",
-          "description": "The drink type to delete"
+          "description": "The drink type to delete. Select from standard options or enter a custom ID."
         },
         "measure_id": {
           "name": "Measure Type",
-          "description": "The measure ID of the drink to delete"
+          "description": "The measure of the drink to delete"
         },
         "date": {
           "name": "Date",

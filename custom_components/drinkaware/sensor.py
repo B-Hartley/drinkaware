@@ -377,5 +377,61 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                 
                 # Also add raw data in a separate attribute
                 attrs["Raw Drink Data"] = drinks
+            
+            # NEW CODE: Add available drinks as attributes
+            standard_drinks = []
+            custom_drinks = []
+            
+            if hasattr(self.coordinator, 'drinks_cache') and self.coordinator.drinks_cache:
+                # Add standard drinks
+                if "categories" in self.coordinator.drinks_cache:
+                    for category in self.coordinator.drinks_cache["categories"]:
+                        category_name = category.get("title", "Unknown Category")
+                        for drink in category.get("drinks", []):
+                            standard_drinks.append({
+                                "id": drink.get("drinkId"),
+                                "category": category_name,
+                                "title": drink.get("title"),
+                                "abv": drink.get("abv"),
+                                "measures": [
+                                    {"id": m.get("measureId"), "title": m.get("title"), "size_ml": round(m.get("litres", 0) * 1000)}
+                                    for m in drink.get("measures", [])
+                                ]
+                            })
+                
+                # Add custom drinks
+                if "customDrinks" in self.coordinator.drinks_cache:
+                    for drink in self.coordinator.drinks_cache["customDrinks"]:
+                        custom_drinks.append({
+                            "id": drink.get("drinkId"),
+                            "title": drink.get("title"),
+                            "abv": drink.get("abv"),
+                            "measures": [
+                                {"id": m.get("measureId"), "title": m.get("title"), "size_ml": round(m.get("litres", 0) * 1000)}
+                                for m in drink.get("measures", [])
+                            ]
+                        })
+                
+                # Also check search results for custom drinks
+                if "results" in self.coordinator.drinks_cache:
+                    for drink in self.coordinator.drinks_cache["results"]:
+                        if "derivedDrinkId" in drink:  # This indicates it's a custom drink
+                            # Check if this drink is already in our custom_drinks list
+                            drink_id = drink.get("drinkId")
+                            existing_ids = [d.get("id") for d in custom_drinks]
+                            if drink_id and drink_id not in existing_ids:
+                                custom_drinks.append({
+                                    "id": drink_id,
+                                    "title": drink.get("title", "Custom Drink"),
+                                    "abv": drink.get("abv", 0),
+                                    "measure": {
+                                        "id": drink.get("measureId"),
+                                        "title": drink.get("measureName", "Unknown"),
+                                        "size_ml": round(drink.get("measure", 0) * 1000)
+                                    }
+                                })
+            
+            attrs["available_standard_drinks"] = standard_drinks
+            attrs["available_custom_drinks"] = custom_drinks
                 
         return attrs

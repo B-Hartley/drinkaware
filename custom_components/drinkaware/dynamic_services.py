@@ -20,6 +20,9 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Store the last used account
+_LAST_USED_ACCOUNT = None
+
 # Mapping of drink types to compatible measure types
 DRINK_MEASURE_COMPATIBILITY = {
     # Beer/Lager/Ale
@@ -142,13 +145,33 @@ DEFAULT_ABV_VALUES = {
 }
 
 @callback
+def update_last_used_account(account_name):
+    """Update the last used account name."""
+    global _LAST_USED_ACCOUNT
+    _LAST_USED_ACCOUNT = account_name
+
+@callback
 def async_get_first_account_name(hass: HomeAssistant) -> str:
-    """Get the first configured account name."""
+    """Get the preferred account name (recently used or first available)."""
+    global _LAST_USED_ACCOUNT
+    
+    # Check if we have a recent account
+    if _LAST_USED_ACCOUNT is not None:
+        # Verify the account still exists
+        for entry_id, coordinator in hass.data[DOMAIN].items():
+            if entry_id == "account_name_map":
+                continue
+            if (hasattr(coordinator, 'account_name') and 
+                coordinator.account_name.lower() == _LAST_USED_ACCOUNT.lower()):
+                return _LAST_USED_ACCOUNT
+    
+    # If no recent account or it doesn't exist anymore, return the first one
     for entry_id, coordinator in hass.data[DOMAIN].items():
         if entry_id == "account_name_map":
             continue
         if hasattr(coordinator, 'account_name'):
             return coordinator.account_name
+    
     return ""
 
 @callback
@@ -171,17 +194,32 @@ def async_get_available_drinks(hass: HomeAssistant):
                         if drink_id:
                             drinks_data[drink_id] = drink
             
-            # Add custom drinks - check both customDrinks and any other locations
-            if "customDrinks" in coordinator.drinks_cache:
-                for drink in coordinator.drinks_cache["customDrinks"]:
-                    custom_drinks.append(drink)
-                    
-            # API might also return custom drinks directly in the drinks array
+            # Add custom drinks from search results
             if "drinks" in coordinator.drinks_cache:
                 for drink in coordinator.drinks_cache["drinks"]:
-                    # If it's not already in our standard drinks
-                    if drink.get("drinkId") not in drinks_data:
-                        custom_drinks.append(drink)
+                    if "derivedDrinkId" in drink:
+                        # This is likely a custom drink
+                        custom_drinks.append({
+                            **drink,
+                            "account_name": coordinator.account_name
+                        })
+            
+            # Also check the customDrinks array if it exists
+            if "customDrinks" in coordinator.drinks_cache:
+                for drink in coordinator.drinks_cache["customDrinks"]:
+                    custom_drinks.append({
+                        **drink,
+                        "account_name": coordinator.account_name
+                    })
+                    
+            # Also check results array which is present in search results
+            if "results" in coordinator.drinks_cache:
+                for drink in coordinator.drinks_cache["results"]:
+                    if "derivedDrinkId" in drink:
+                        custom_drinks.append({
+                            **drink, 
+                            "account_name": coordinator.account_name
+                        })
     
     # Compile drink options
     drink_options = []
@@ -200,10 +238,12 @@ def async_get_available_drinks(hass: HomeAssistant):
         drink_id = drink.get("drinkId")
         abv = drink.get("abv", 0)
         title = drink.get("title", "Custom Drink")
+        account_name = drink.get("account_name", "Unknown")
+        
         if drink_id:
             drink_options.append({
                 "value": drink_id,
-                "label": f"{title} ({abv}% ABV) - Custom"
+                "label": f"{title} ({abv}% ABV) - Custom [{account_name}]"
             })
     
     # Add "Custom" option at the end
@@ -299,8 +339,10 @@ def async_get_log_sleep_quality_schema(hass: HomeAssistant):
 @callback
 def async_get_refresh_schema(hass: HomeAssistant):
     """Get schema for refresh service."""
+    first_account = async_get_first_account_name(hass)
+    
     schema_dict = {
-        vol.Optional(ATTR_ACCOUNT_NAME): cv.string,
+        vol.Optional(ATTR_ACCOUNT_NAME, default=first_account): cv.string,
         vol.Optional(ATTR_ENTRY_ID): cv.string,
     }
     return schema_dict
@@ -309,7 +351,6 @@ def async_get_refresh_schema(hass: HomeAssistant):
 def async_get_log_drink_schema(hass: HomeAssistant):
     """Get schema for log drink service."""
     first_account = async_get_first_account_name(hass)
-    drink_options = async_get_available_drinks(hass)
     
     # Create schema with dynamic options if available
     schema_dict = {
@@ -329,13 +370,12 @@ def async_get_log_drink_schema(hass: HomeAssistant):
 def async_get_delete_drink_schema(hass: HomeAssistant):
     """Get schema for delete drink service."""
     first_account = async_get_first_account_name(hass)
-    drink_options = async_get_available_drinks(hass)
     
     # Create schema with dynamic options if available
     schema_dict = {
         vol.Required(ATTR_ACCOUNT_NAME, default=first_account): cv.string,
         vol.Optional(ATTR_ENTRY_ID): cv.string,
-        vol.Required(ATTR_DRINK_TYPE): cv.string,
+        vol.Required(ATTR_DRINK_TYPE): cv.string,  # Keep using the original ATTR_DRINK_TYPE
         vol.Required(ATTR_DRINK_MEASURE): cv.string,
         vol.Optional(ATTR_DATE): cv.date,
     }

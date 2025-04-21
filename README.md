@@ -95,8 +95,8 @@ Record a drink in your Drinkaware tracking:
 service: drinkaware.log_drink
 data:
   account_name: "Bruce"  # Or use entry_id instead
-  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer
-  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (or select from dropdown)
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (or select from dropdown)
   abv: 4.5  # Optional
   quantity: 1  # Optional, defaults to 1
   date: "2025-04-18"  # Optional, defaults to today
@@ -111,8 +111,8 @@ Remove a recorded drink from your tracking:
 service: drinkaware.delete_drink
 data:
   account_name: "Bruce"  # Or use entry_id instead
-  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer
-  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (or select from dropdown)
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (or select from dropdown)
   date: "2025-04-18"  # Optional, defaults to today
 ```
 
@@ -168,5 +168,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Version History
 
+- **0.1.8** - Added dropdown menus for drink and measure selection in services
 - **0.1.7** - Fixed issues with custom drink measure descriptions and drink-free day functionality
 - **0.1.6** - Previous release

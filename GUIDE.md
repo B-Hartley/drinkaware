@@ -1,13 +1,99 @@
 # Drinkaware Integration Guide
 
-This comprehensive guide covers all aspects of using the Drinkaware integration, including available services, drink types, measures, and examples.
+This comprehensive guide covers all aspects of using the Drinkaware integration for Home Assistant, including installation, configuration, available services, sensors, drink types, measures, and example automations.
 
 ## Table of Contents
-1. [Services](#services)
-2. [Available Drinks](#available-drinks)
-3. [Measures](#measures)
-4. [Custom Drinks](#custom-drinks)
-5. [Example Scripts and Automations](#example-scripts-and-automations)
+1. [Installation](#installation)
+2. [Configuration](#configuration)
+3. [Available Sensors](#available-sensors)
+4. [Services](#services)
+5. [Available Drinks](#available-drinks)
+6. [Measures](#measures)
+7. [Custom Drinks](#custom-drinks)
+8. [Example Scripts and Automations](#example-scripts-and-automations)
+9. [Troubleshooting](#troubleshooting)
+10. [Privacy and Security](#privacy-and-security)
+
+## Installation
+
+### Method 1: HACS (Recommended)
+
+1. Make sure you have [HACS](https://hacs.xyz/) installed
+2. Add this repository as a custom repository in HACS:
+   - Go to HACS → Integrations → ⋮ (menu) → Custom Repositories
+   - Add `https://github.com/B-Hartley/drinkaware` as a repository
+   - Category: Integration
+3. Click "Install" on the Drinkaware integration
+4. Restart Home Assistant
+
+### Method 2: Manual Installation
+
+1. Download the latest release
+2. Extract the `drinkaware` folder into your `custom_components` directory
+3. Restart Home Assistant
+
+## Configuration
+
+The integration can be set up through the Home Assistant UI:
+
+1. Go to **Settings** → **Devices & Services**
+2. Click the **+ Add Integration** button
+3. Search for "Drinkaware" and select it
+4. Follow the configuration flow
+
+### Authentication Method
+
+This integration uses OAuth to authenticate with Drinkaware:
+
+1. Enter a name for your Drinkaware account
+2. Click the link to authorize Drinkaware
+3. Log in with your Drinkaware credentials
+4. After successful login, you'll be redirected to a page that won't load (this is normal)
+5. **Important:** Open your browser's Developer Tools (press F12), go to the Network tab, find the callback URL, right-click and select "Copy URL"
+6. Paste the copied URL in the next step of the setup process
+
+**Note:** In the Network tab, look for a request with "callback" in the name. The URL should start with `uk.co.drinkaware.drinkaware://oauth/callback` and contain a code parameter.
+
+## Available Sensors
+
+The integration creates several sensors:
+
+| Sensor | Description |
+|--------|-------------|
+| Risk Level | Your assessed risk level (Low, Increasing, High, or Possible Dependency) |
+| Self Assessment Score | Your total score from the self-assessment |
+| Drink Free Days | Total number of alcohol-free days tracked |
+| Current Drink Free Streak | Your current streak of consecutive alcohol-free days |
+| Days Tracked | Total number of days tracked in the app |
+| Goals Achieved | Number of goals you've achieved |
+| Current Goal Progress | Progress toward your current goal as a percentage |
+| Weekly Units | Total units consumed in the past week |
+| Last Drink Date | Date of your most recent recorded drink |
+| Drinks Today | Number of drinks consumed today, with detailed list in attributes |
+
+### Sensor Details and Attributes
+
+Most sensors include additional data in their attributes. Here are some examples:
+
+#### Risk Level Sensor
+- **State:** Low Risk, Increasing Risk, High Risk, or Possible Dependency
+- **Attributes:**
+  - Individual scores for frequency, units, binge frequency, etc.
+  - Assessment date
+
+#### Weekly Units Sensor
+- **State:** Total units for the past 7 days
+- **Attributes:**
+  - Daily breakdown with units, drinks, and drink-free status for each day
+  - Information about the weekly calculation period
+
+#### Drinks Today Sensor
+- **State:** Number of drinks recorded today
+- **Attributes:**
+  - Today's total units
+  - Drink-free day status
+  - Detailed list of each drink with quantity, name, measure, and ABV
+  - Available standard drinks and custom drinks (useful for service calls)
 
 ## Services
 
@@ -39,8 +125,8 @@ Record a drink in your Drinkaware tracking.
 **Parameters:**
 - `account_name`: (Optional) The name of your Drinkaware account (as entered during setup)
 - `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
-- `drink_id`: (Required) The drink type ID from Drinkaware API
-- `measure_id`: (Required) The measure ID from Drinkaware API
+- `drink_id`: (Required) The drink type to log. Can be selected from dropdown menu or entered as a custom ID.
+- `measure_id`: (Required) The measure to use. Can be selected from dropdown menu or entered as a custom ID.
 - `abv`: (Optional) The alcohol percentage (will use default if not specified)
 - `quantity`: (Optional) The number of drinks of this type (defaults to 1)
 - `date`: (Optional) The date to log the drink (defaults to today)
@@ -51,8 +137,8 @@ Record a drink in your Drinkaware tracking.
 service: drinkaware.log_drink
 data:
   account_name: "Bruce"
-  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer
-  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (can be selected from dropdown)
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (can be selected from dropdown)
   abv: 4.5
   quantity: 2
   date: "2025-04-18"
@@ -66,8 +152,8 @@ Remove a recorded drink from your Drinkaware tracking.
 **Parameters:**
 - `account_name`: (Optional) The name of your Drinkaware account (as entered during setup)
 - `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
-- `drink_id`: (Required) The drink type ID to delete
-- `measure_id`: (Required) The measure ID of the drink to delete
+- `drink_id`: (Required) The drink type to delete. Can be selected from dropdown menu or entered as a custom ID.
+- `measure_id`: (Required) The measure of the drink to delete. Can be selected from dropdown menu or entered as a custom ID.
 - `date`: (Optional) The date the drink was logged (defaults to today)
 
 **Example:**
@@ -75,8 +161,8 @@ Remove a recorded drink from your Drinkaware tracking.
 service: drinkaware.delete_drink
 data:
   account_name: "Bruce"
-  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer
-  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (can be selected from dropdown)
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (can be selected from dropdown)
   date: "2025-04-18"
 ```
 
@@ -121,7 +207,7 @@ data:
 Manually refresh data from the Drinkaware API.
 
 **Parameters:**
-- `account_name`: (Optional) The name of your Drinkaware account (as entered during setup)
+- `account_name`: (Optional) The name of your Drinkaware account (as entered during setup) - leave empty to refresh all accounts
 - `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
 
 **Example:**
@@ -133,7 +219,7 @@ data:
 
 ## Available Drinks
 
-The following drink types are available in the Drinkaware API:
+The following drink types are available in the Drinkaware API and can be selected from the dropdown menu when using services:
 
 ### Beer
 - Lager (`FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7`): 4.0% ABV
@@ -167,7 +253,7 @@ The following drink types are available in the Drinkaware API:
 
 ## Measures
 
-The following measures are available for different drink types:
+The following measures are available for different drink types and can be selected from the dropdown menu:
 
 ### Beer and Cider Measures
 - Pint (`B59DCD68-96FF-4B4C-BA69-3707D085C407`): 568ml
@@ -193,6 +279,10 @@ The following measures are available for different drink types:
 ### Port/Sherry Measures
 - Small glass (`021703DD-248C-4A51-ACFD-0CE97540C8EC`): 75ml
 
+### Measure Compatibility
+
+Not all measures are compatible with all drink types. For example, you can't log a pint of wine or a wine glass of beer. The service dropdown menus will automatically filter compatible options, but if you're entering IDs manually, ensure the measure is appropriate for the drink type.
+
 ## Custom Drinks
 
 The Drinkaware integration supports both predefined drink types and custom drinks that may be created in the Drinkaware app.
@@ -201,42 +291,38 @@ The Drinkaware integration supports both predefined drink types and custom drink
 
 Custom drinks are created within the Drinkaware app and are assigned unique IDs that work just like the predefined drink types. From the perspective of Home Assistant, there's no functional difference between a predefined drink type and a custom drink - both are identified by UUIDs.
 
-### Some Known Custom Drinks
+### Custom Drinks in Home Assistant UI
 
-- Corona 330ml (`E44AE744-1318-4978-8C84-E143C2B0AE3B`): 4.5% ABV (derived from Lager)
-- Wingman A.F. (`B515F736-F194-4ED4-A7A9-EA2D75CC51AD`): 0.5% ABV (derived from Lager)
-- Tequila (`4DDB9B89-CCB5-471E-A03C-AC516AE4E821`): 45.0% ABV (custom version of standard Tequila)
+Since version 0.1.8, selecting drinks and measures is even easier thanks to dropdown menus in the service UI:
+
+1. When calling the `log_drink` or `delete_drink` service, all standard drinks appear in a dropdown menu
+2. For custom drinks, you can either:
+   - Enter the custom drink ID directly in the field
+   - Select "Custom Drink ID" from the dropdown and then replace it with your actual custom ID
+3. The same applies to measures - either select from the dropdown or enter a custom ID
 
 ### How to Find Custom Drink IDs
 
 To find the ID of a custom drink:
-- You'll need to use a network capture tool like MITM Proxy to inspect the traffic from the Drinkaware app
+- The "Drinks Today" sensor shows all available drinks (including custom ones) in its attributes
+- You can also use a network capture tool like MITM Proxy to inspect the traffic from the Drinkaware app
 - Look for the `drinkId` parameter when a drink is added
-- The "Drinks Today" sensor can also help by showing the raw drink data in its attributes
 
-### Custom Drinks in Home Assistant UI
+### Creating Custom Drinks with Different ABV
 
-Once you create a custom drink either in the app or via the services, these custom drinks should appear in the dropdown menus in the Home Assistant UI service call panel. If they don't appear immediately:
-
-1. Try refreshing Home Assistant (not a full restart)
-2. Use the `refresh` service to update the drinks cache
-3. The custom drinks will be shown with "(Custom)" suffix in the dropdown
-
-Note that in versions before 0.1.7, there were issues with custom drink measures not showing their descriptions properly.
-
-### Using Custom Drinks
-
-If you have identified a custom drink ID:
+When logging a drink with a custom ABV that differs from the default, the integration will automatically create a custom drink:
 
 ```yaml
 service: drinkaware.log_drink
 data:
   account_name: "Bruce"
-  drink_id: "1A2B3C4D-5E6F-7890-ABCD-EF1234567890"  # Your custom drink ID
+  drink_id: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"  # Lager
   measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
-  abv: 5.2  # Custom ABV if needed
+  abv: 5.2  # Different from default 4.0%
   quantity: 1
 ```
+
+This will create a custom version of Lager with 5.2% ABV. The custom drink will be cached and can be used again.
 
 ## Example Scripts and Automations
 
@@ -339,6 +425,128 @@ automation:
           message: "You have consumed {{ states('sensor.drinkaware_bruce_weekly_units') }} units this week, approaching the recommended limit."
 ```
 
-## Note on API Limitations
+### Tracking Longest Drink-Free Streak
 
-The Drinkaware API may have rate limiting in place, so avoid making too many service calls in a short period of time. If you encounter errors like "Rate limit exceeded," the integration will automatically wait and retry after a brief delay.
+```yaml
+automation:
+  - alias: "Update Longest Drink-Free Streak Helper"
+    trigger:
+      - platform: state
+        entity_id: sensor.drinkaware_bruce_drink_free_streak
+    action:
+      - condition: template
+        value_template: >
+          {{ states('sensor.drinkaware_bruce_drink_free_streak')|int > states('input_number.longest_drink_free_streak')|int }}
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.longest_drink_free_streak
+        data:
+          value: "{{ states('sensor.drinkaware_bruce_drink_free_streak') }}"
+```
+
+## Troubleshooting
+
+### Authentication Issues
+
+#### "Cannot find authorization code in URL"
+
+**Problem:** During OAuth setup, you receive an error about missing authorization code.
+
+**Solution:**
+1. Make sure you're copying the URL from your browser's developer tools correctly:
+   - Press F12 to open Developer Tools
+   - Go to the Network tab
+   - Look for a request with "callback" in the name (usually the one that's shown as canceled or redirected)
+   - Right-click on this request and select "Copy URL"
+   - The URL should start with `uk.co.drinkaware.drinkaware://` and contain a `code=` parameter
+2. Make sure you're pasting the complete URL including all parameters
+
+### API Issues
+
+#### "Rate limit exceeded"
+
+**Problem:** You see errors about exceeding rate limits.
+
+**Solution:**
+- The integration is making too many requests to the Drinkaware API
+- The integration will automatically wait and retry after the suggested delay
+- Consider spacing out your service calls or automations
+- Reduce the frequency of automations that call Drinkaware services
+
+#### "Failed to log drink-free day: Cannot set drink-free day if day has drinks added"
+
+**Problem:** You're trying to set a drink-free day for a date that already has drinks logged.
+
+**Solution:**
+1. Set the `remove_drinks` parameter to `true` when calling the service:
+   ```yaml
+   service: drinkaware.log_drink_free_day
+   data:
+     account_name: "Bruce"
+     date: "2025-04-18"
+     remove_drinks: true
+   ```
+2. If that doesn't work, first manually remove all drinks for that day using the Drinkaware app or the `delete_drink` service
+
+### Service Issues
+
+#### "Extra keys not allowed" or "Required key not provided" when using services
+
+**Problem:** When trying to use `log_drink` or `delete_drink` service, you get errors about extra keys or required keys.
+
+**Solution:**
+1. Make sure you're using the correct parameter names:
+   - Use `drink_id` rather than `standard_drink` or `custom_drink_id`
+   - The dropdown shows common options, but the parameter itself is still `drink_id`
+2. Don't keep the "Custom Drink ID" value in your service call - replace it with the actual ID
+3. Don't enter "custom" as the measure ID - replace it with the actual measure ID
+4. If using the YAML service editor, ensure all fields match exactly what's expected
+
+#### Can't see the new dropdown menus in the service UI
+
+**Problem:** The service UI doesn't show dropdown menus for drink types and measures.
+
+**Solution:**
+1. Make sure you're running version 0.1.8 or later of the integration
+2. Clear your browser cache or try a different browser
+3. Restart Home Assistant
+4. If you still don't see the dropdowns, try reinstalling the integration
+
+### Debug Logging
+
+To enable detailed debug logging for the integration:
+
+1. Add the following to your `configuration.yaml`:
+   ```yaml
+   logger:
+     default: info
+     logs:
+       custom_components.drinkaware: debug
+   ```
+2. Restart Home Assistant
+3. Check the logs for detailed information about any issues
+
+## Privacy and Security
+
+### Data Storage
+
+This integration stores:
+- OAuth tokens for authentication with the Drinkaware API
+- Account name and email as provided during setup
+- A cache of drinks and activities for improved performance
+
+All data is stored locally in your Home Assistant instance and is not shared with third parties.
+
+### API Communication
+
+The integration communicates directly with the Drinkaware API using HTTPS. No data is sent to other servers or services.
+
+### OAuth Security
+
+The OAuth authentication flow uses industry-standard PKCE (Proof Key for Code Exchange) to ensure secure token exchange, protecting your Drinkaware credentials.
+
+## Version History
+
+- **0.1.8** - Added dropdown menus for drink and measure selection in services
+- **0.1.7** - Fixed issues with custom drink measure descriptions and drink-free day functionality
+- **0.1.6** - Previous release
