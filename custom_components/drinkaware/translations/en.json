@@ -110,12 +110,16 @@
           "description": "The Drinkaware config entry ID - only needed if account name is not specified"
         },
         "drink_id": {
-          "name": "Drink Type",
-          "description": "The drink type to log. Select from standard options or enter a custom ID."
+          "name": "Standard Drink Type",
+          "description": "Select a standard drink type from the list (use this OR custom drink ID)"
+        },
+        "custom_drink_id": {
+          "name": "Custom Drink ID",
+          "description": "Enter a custom drink ID (use this OR standard drink type)"
         },
         "measure_id": {
           "name": "Measure Type",
-          "description": "The measure to use"
+          "description": "The measure to use (make sure it's compatible with the selected drink type)"
         },
         "name": {
           "name": "Custom Name",
@@ -152,12 +156,16 @@
           "description": "The Drinkaware config entry ID - only needed if account name is not specified"
         },
         "drink_id": {
-          "name": "Drink Type",
-          "description": "The drink type to delete. Select from standard options or enter a custom ID."
+          "name": "Standard Drink Type",
+          "description": "Select a standard drink type from the list (use this OR custom drink ID)"
+        },
+        "custom_drink_id": {
+          "name": "Custom Drink ID",
+          "description": "Enter a custom drink ID (use this OR standard drink type)"
         },
         "measure_id": {
           "name": "Measure Type",
-          "description": "The measure of the drink to delete"
+          "description": "The measure of the drink to delete (must be compatible with the selected drink type)"
         },
         "date": {
           "name": "Date",

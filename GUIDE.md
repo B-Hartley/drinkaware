@@ -94,6 +94,7 @@ Most sensors include additional data in their attributes. Here are some examples
   - Drink-free day status
   - Detailed list of each drink with quantity, name, measure, and ABV
   - Available standard drinks and custom drinks (useful for service calls)
+  - **`custom_drinks_reference`**: User-friendly list of custom drinks with their IDs
 
 ## Services
 
@@ -125,24 +126,37 @@ Record a drink in your Drinkaware tracking.
 **Parameters:**
 - `account_name`: (Optional) The name of your Drinkaware account (as entered during setup)
 - `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
-- `drink_id`: (Required) The drink type to log. Can be selected from dropdown menu or entered as a custom ID.
-- `measure_id`: (Required) The measure to use. Can be selected from dropdown menu or entered as a custom ID.
+- `drink_id`: (Optional) The standard drink type to log from dropdown menu (use this OR custom_drink_id)
+- `custom_drink_id`: (Optional) A custom drink ID from the Drinks Today sensor (use this OR drink_id)
+- `measure_id`: (Required) The measure to use from dropdown menu
 - `abv`: (Optional) The alcohol percentage (will use default if not specified)
 - `name`: (Optional) Custom name for the drink (only works when specifying a custom ABV)
 - `quantity`: (Optional) The number of drinks of this type (defaults to 1)
 - `date`: (Optional) The date to log the drink (defaults to today)
 - `auto_remove_dfd`: (Optional) Automatically remove the drink-free day mark if present (defaults to false)
 
-**Example:**
+**Example with standard drink:**
 ```yaml
 service: drinkaware.log_drink
 data:
   account_name: "Bruce"
-  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (can be selected from dropdown)
-  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (can be selected from dropdown)
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (select from dropdown)
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
   abv: 4.5
   name: "Local Craft IPA"  # Custom name (only works with custom ABV)
   quantity: 2
+  date: "2025-04-18"
+  auto_remove_dfd: true
+```
+
+**Example with custom drink ID:**
+```yaml
+service: drinkaware.log_drink
+data:
+  account_name: "Bruce"
+  custom_drink_id: "12345678-ABCD-1234-5678-123456789ABC"  # Custom drink ID from Drinks Today sensor
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
+  quantity: 1
   date: "2025-04-18"
   auto_remove_dfd: true
 ```
@@ -154,17 +168,28 @@ Remove a recorded drink from your Drinkaware tracking.
 **Parameters:**
 - `account_name`: (Optional) The name of your Drinkaware account (as entered during setup)
 - `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
-- `drink_id`: (Required) The drink type to delete. Can be selected from dropdown menu or entered as a custom ID.
-- `measure_id`: (Required) The measure of the drink to delete. Can be selected from dropdown menu or entered as a custom ID.
+- `drink_id`: (Optional) The standard drink type to delete from dropdown menu (use this OR custom_drink_id)
+- `custom_drink_id`: (Optional) A custom drink ID from the Drinks Today sensor (use this OR drink_id)
+- `measure_id`: (Required) The measure of the drink to delete from dropdown menu
 - `date`: (Optional) The date the drink was logged (defaults to today)
 
-**Example:**
+**Example with standard drink:**
 ```yaml
 service: drinkaware.delete_drink
 data:
   account_name: "Bruce"
-  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (can be selected from dropdown)
-  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (can be selected from dropdown)
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (select from dropdown)
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
+  date: "2025-04-18"
+```
+
+**Example with custom drink ID:**
+```yaml
+service: drinkaware.delete_drink
+data:
+  account_name: "Bruce"
+  custom_drink_id: "12345678-ABCD-1234-5678-123456789ABC"  # Custom drink ID from Drinks Today sensor
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
   date: "2025-04-18"
 ```
 
@@ -293,31 +318,40 @@ The Drinkaware integration supports both predefined drink types and custom drink
 
 Custom drinks are created within the Drinkaware app and are assigned unique IDs that work just like the predefined drink types. From the perspective of Home Assistant, there's no functional difference between a predefined drink type and a custom drink - both are identified by UUIDs.
 
-### Custom Drinks in Home Assistant UI
+### Using Custom Drink IDs in Service Calls
 
-Since version 0.1.8, selecting drinks and measures is even easier thanks to dropdown menus in the service UI:
+Since version 0.3.0, you can directly use custom drink IDs in service calls:
 
-1. When calling the `log_drink` or `delete_drink` service, all standard drinks appear in a dropdown menu
-2. For custom drinks, you can either:
-   - Enter the custom drink ID directly in the field
-   - Select "Custom Drink ID" from the dropdown and then replace it with your actual custom ID
-3. The same applies to measures - either select from the dropdown or enter a custom ID
+1. When calling the `log_drink` or `delete_drink` service, select "Custom drink ID (enter manually)" from the "Select drink type" dropdown
+2. Enter your custom drink ID in the "Custom Drink ID" field
+3. Select the appropriate measure from the measures dropdown
+4. Fill in the remaining fields as needed
 
 ### How to Find Custom Drink IDs
 
 To find the ID of a custom drink:
-- The "Drinks Today" sensor shows all available drinks (including custom ones) in its attributes
-- You can also use a network capture tool like MITM Proxy to inspect the traffic from the Drinkaware app
-- Look for the `drinkId` parameter when a drink is added
+
+1. Go to Developer Tools > States in Home Assistant
+2. Find and select the Drinkaware "Drinks Today" sensor (it will be named like `sensor.drinkaware_[account_name]_drinks_today`)
+3. In the **Attributes** section, look for:
+   - `custom_drinks_reference` - A user-friendly list of custom drinks with their IDs
+   - `available_custom_drinks` - A more detailed list with complete information
+
+Each drink in the `custom_drinks_reference` list includes:
+- `name` - The name of the drink
+- `drink_id` - The ID you need to use in service calls
+- `abv` - The alcohol percentage
+- `measures` - Available measures with their IDs
 
 ### Creating Custom Drinks with Different ABV and Names
 
-Since version 0.1.9, you can now provide a custom name when logging a drink with a custom ABV. This allows you to create personalized drink names that will appear in your tracking:
+Since version 0.2.0, you can provide a custom name when logging a drink with a custom ABV. This allows you to create personalized drink names that will appear in your tracking:
 
 ```yaml
 service: drinkaware.log_drink
 data:
   account_name: "Bruce"
+  drink_type_selector: "standard"
   drink_id: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"  # Lager
   measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
   abv: 5.2  # Different from default 4.0%
@@ -351,6 +385,7 @@ script:
       - service: drinkaware.log_drink
         data:
           account_name: "Bruce"
+          drink_type_selector: "standard"
           drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer
           measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
           quantity: "{{ quantity }}"
@@ -368,8 +403,37 @@ script:
       - service: drinkaware.log_drink
         data:
           account_name: "Bruce"
+          drink_type_selector: "standard"
           drink_id: "19E82B28-9AD5-4546-A966-13B27EC6E4FB"  # Red Wine
           measure_id: "E586C800-24CA-4942-837A-4CD2CBF8338A"  # Medium glass
+          quantity: "{{ quantity }}"
+          auto_remove_dfd: true
+```
+
+### Helper Script for Custom Drink
+
+```yaml
+script:
+  log_custom_drink:
+    alias: "Log a custom drink"
+    description: "Log a custom drink to Drinkaware using its ID"
+    fields:
+      drink_id:
+        description: "Custom drink ID"
+        example: "12345678-ABCD-1234-5678-123456789ABC"
+      measure_id:
+        description: "Measure ID"
+        example: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+      quantity:
+        description: "Number of drinks"
+        example: 1
+    sequence:
+      - service: drinkaware.log_drink
+        data:
+          account_name: "Bruce"
+          drink_type_selector: "custom"
+          custom_drink_id: "{{ drink_id }}"
+          measure_id: "{{ measure_id }}"
           quantity: "{{ quantity }}"
           auto_remove_dfd: true
 ```
@@ -502,22 +566,22 @@ automation:
 **Problem:** When trying to use `log_drink` or `delete_drink` service, you get errors about extra keys or required keys.
 
 **Solution:**
-1. Make sure you're using the correct parameter names:
-   - Use `drink_id` rather than `standard_drink` or `custom_drink_id`
-   - The dropdown shows common options, but the parameter itself is still `drink_id`
-2. Don't keep the "Custom Drink ID" value in your service call - replace it with the actual ID
-3. Don't enter "custom" as the measure ID - replace it with the actual measure ID
-4. If using the YAML service editor, ensure all fields match exactly what's expected
+1. Make sure you're using the correct parameter names and structure:
+   - For standard drinks: use `drink_type_selector: "standard"` and `drink_id: "UUID"`
+   - For custom drinks: use `drink_type_selector: "custom"` and `custom_drink_id: "UUID"`
+2. Don't provide both `drink_id` and `custom_drink_id` in the same service call
+3. If using the YAML service editor, ensure all fields match exactly what's expected
 
-#### Can't see the new dropdown menus in the service UI
+#### Custom Drink IDs Not Working
 
-**Problem:** The service UI doesn't show dropdown menus for drink types and measures.
+**Problem:** When trying to use a custom drink ID, it doesn't work or gives errors.
 
 **Solution:**
-1. Make sure you're running version 0.1.8 or later of the integration
-2. Clear your browser cache or try a different browser
-3. Restart Home Assistant
-4. If you still don't see the dropdowns, try reinstalling the integration
+1. Verify you're using the correct UUID format for the drink ID
+2. Make sure you've set `drink_type_selector: "custom"` and provided the ID in the `custom_drink_id` field
+3. Refresh the Drinkaware data to ensure the custom drinks are up to date
+4. Check if the custom drink exists in your Drinkaware account by looking at the "Drinks Today" sensor attributes
+5. If the custom drink was recently created in the app, it might take time to appear in the integration
 
 ### Debug Logging
 
@@ -554,6 +618,9 @@ The OAuth authentication flow uses industry-standard PKCE (Proof Key for Code Ex
 
 ## Version History
 
+- **0.3.0** - Added support for custom drink IDs in service UI
+- **0.2.1** - Added validation for drink and measure compatibility
+- **0.2.0** - Added ability to set custom names for drinks when specifying custom ABV
 - **0.1.8** - Added dropdown menus for drink and measure selection in services
 - **0.1.7** - Fixed issues with custom drink measure descriptions and drink-free day functionality
-- **0.1.6** - Previous release
+- **0.1.6** - Previous release		  

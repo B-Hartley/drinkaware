@@ -132,12 +132,6 @@ def async_get_available_drinks(hass: HomeAssistant):
                 "label": f"{title} ({abv}% ABV) - Custom [{account_name}]"
             })
     
-    # Add "Custom" option at the end
-    drink_options.append({
-        "value": "custom",
-        "label": "Custom Drink (Enter ID directly)"
-    })
-    
     return drink_options
 
 @callback
@@ -163,12 +157,6 @@ def async_get_compatible_measures(hass: HomeAssistant, drink_id):
     for measure in all_measures:
         if measure["value"] in compatible_measure_ids:
             measure_options.append(measure)
-    
-    # Add custom option
-    measure_options.append({
-        "value": "custom",
-        "label": "Custom Measure (Enter ID directly)"
-    })
     
     return measure_options
 
@@ -230,7 +218,9 @@ def async_get_log_drink_schema(hass: HomeAssistant):
     schema_dict = {
         vol.Required(ATTR_ACCOUNT_NAME, default=first_account): cv.string,
         vol.Optional(ATTR_ENTRY_ID): cv.string,
-        vol.Required(ATTR_DRINK_TYPE): cv.string,
+        # Remove the drink_type_selector, we'll infer from provided fields
+        vol.Optional(ATTR_DRINK_TYPE): cv.string,
+        vol.Optional("custom_drink_id"): cv.string,
         vol.Required(ATTR_DRINK_MEASURE): cv.string,
         vol.Optional(ATTR_DRINK_ABV): vol.Coerce(float),
         vol.Optional("name"): cv.string,  # Add optional custom name parameter
@@ -239,8 +229,31 @@ def async_get_log_drink_schema(hass: HomeAssistant):
         vol.Optional("auto_remove_dfd", default=False): cv.boolean,
     }
     
+    # Updated validator to infer which type based on provided fields
+    def validate_drink_id_inputs(value):
+        """Infer drink type and validate inputs."""
+        has_standard = ATTR_DRINK_TYPE in value and value[ATTR_DRINK_TYPE]
+        has_custom = "custom_drink_id" in value and value["custom_drink_id"]
+        
+        # Auto-determine which type we're using
+        if has_standard and not has_custom:
+            # Using standard drink
+            value["drink_type_selector"] = "standard"
+        elif has_custom and not has_standard:
+            # Using custom drink
+            value["drink_type_selector"] = "custom"
+        elif has_standard and has_custom:
+            # Both provided, standard takes precedence
+            value["drink_type_selector"] = "standard"
+            del value["custom_drink_id"]
+        else:
+            # Neither provided
+            raise vol.Invalid("Either standard drink type or custom drink ID must be provided")
+            
+        return value
+    
     # Return the schema with validation
-    return vol.Schema(vol.All(schema_dict, validate_drink_measure_compatibility))
+    return vol.Schema(vol.All(schema_dict, validate_drink_id_inputs, validate_drink_measure_compatibility))
 
 @callback
 def async_get_delete_drink_schema(hass: HomeAssistant):
@@ -251,25 +264,53 @@ def async_get_delete_drink_schema(hass: HomeAssistant):
     schema_dict = {
         vol.Required(ATTR_ACCOUNT_NAME, default=first_account): cv.string,
         vol.Optional(ATTR_ENTRY_ID): cv.string,
-        vol.Required(ATTR_DRINK_TYPE): cv.string,  # Keep using the original ATTR_DRINK_TYPE
+        # Remove the drink_type_selector, we'll infer from provided fields
+        vol.Optional(ATTR_DRINK_TYPE): cv.string,
+        vol.Optional("custom_drink_id"): cv.string,
         vol.Required(ATTR_DRINK_MEASURE): cv.string,
         vol.Optional(ATTR_DATE): cv.date,
     }
     
+    # Updated validator to infer which type based on provided fields
+    def validate_drink_id_inputs(value):
+        """Infer drink type and validate inputs."""
+        has_standard = ATTR_DRINK_TYPE in value and value[ATTR_DRINK_TYPE]
+        has_custom = "custom_drink_id" in value and value["custom_drink_id"]
+        
+        # Auto-determine which type we're using
+        if has_standard and not has_custom:
+            # Using standard drink
+            value["drink_type_selector"] = "standard"
+        elif has_custom and not has_standard:
+            # Using custom drink
+            value["drink_type_selector"] = "custom"
+        elif has_standard and has_custom:
+            # Both provided, standard takes precedence
+            value["drink_type_selector"] = "standard"
+            del value["custom_drink_id"]
+        else:
+            # Neither provided
+            raise vol.Invalid("Either standard drink type or custom drink ID must be provided")
+            
+        return value
+    
     # Return the schema with validation
-    return vol.Schema(vol.All(schema_dict, validate_drink_measure_compatibility))
+    return vol.Schema(vol.All(schema_dict, validate_drink_id_inputs, validate_drink_measure_compatibility))
     
 def validate_drink_measure_compatibility(value):
     """Validate that the drink and measure types are compatible."""
-    drink_id = value.get(ATTR_DRINK_TYPE)
+    # Determine which drink ID to use
+    drink_id = None
+    if value.get("drink_type_selector") == "standard":
+        drink_id = value.get(ATTR_DRINK_TYPE)
+    else:
+        # For custom drinks, skip compatibility validation
+        return value
+        
     measure_id = value.get(ATTR_DRINK_MEASURE)
     
     # Skip validation if either is not provided
     if not drink_id or not measure_id:
-        return value
-    
-    # Skip validation if using custom values
-    if drink_id == "custom" or measure_id == "custom":
         return value
     
     # Get compatible measure IDs for this drink

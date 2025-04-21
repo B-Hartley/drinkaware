@@ -154,25 +154,40 @@ This comprehensive troubleshooting guide covers common issues you might encounte
 
 ## Service Call Issues
 
-### Extra Keys Not Allowed or Required Key Not Provided
+### Using Custom Drink IDs
 
-**Problem:** When trying to use `log_drink` or `delete_drink` service, you get errors about extra keys or required keys.
+**Problem:** You're having trouble using custom drink IDs in service calls.
 
 **Solution:**
-1. Make sure you're using the correct parameter names:
-   - Use `drink_id` rather than `standard_drink` or `custom_drink_id`
-   - The dropdown shows common options, but the parameter itself is still `drink_id`
-2. Don't keep the "Custom Drink ID" value in your service call - replace it with the actual ID
-3. Don't enter "custom" as the measure ID - replace it with the actual measure ID
-4. If using the YAML service editor, ensure all fields match exactly what's expected
-5. Check the service schema in Developer Tools → Services
+1. Make sure you're using the correct format for the service call:
+   ```yaml
+   service: drinkaware.log_drink
+   data:
+     account_name: "YourAccountName"
+     custom_drink_id: "12345678-ABCD-1234-5678-123456789ABC"
+     measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+   ```
+2. Provide the custom drink ID in the `custom_drink_id` field
+3. To find custom drink IDs, check the `custom_drinks_reference` attribute in the "Drinks Today" sensor
+4. If you've just created a custom drink in the app, refresh the integration to update the available drinks
+
+### Service Schema Validation Errors
+
+**Problem:** When trying to use `log_drink` or `delete_drink` service, you get validation errors.
+
+**Solution:**
+1. Make sure you're using the correct parameter names and structure:
+   - For standard drinks: use `drink_id: "UUID"`
+   - For custom drinks: use `custom_drink_id: "UUID"`
+2. Don't provide both `drink_id` and `custom_drink_id` in the same service call (the standard drink will take precedence if both are provided)
+3. If using the YAML service editor, ensure all fields match exactly what's expected
 
 ### Can't See Dropdown Menus in Service UI
 
 **Problem:** The service UI doesn't show dropdown menus for drink types and measures.
 
 **Solution:**
-1. Make sure you're running version 0.1.8 or later of the integration
+1. Make sure you're running the latest version of the integration
 2. Clear your browser cache or try a different browser
 3. Restart Home Assistant
 4. If you still don't see the dropdowns, try reinstalling the integration
@@ -208,17 +223,6 @@ This comprehensive troubleshooting guide covers common issues you might encounte
      date: "2025-04-18"
    ```
 3. If problems persist, check the logs for detailed error information
-
-### Custom Drink IDs Not Working
-
-**Problem:** When trying to use a custom drink ID, it doesn't work or gives errors.
-
-**Solution:**
-1. Verify you're using the correct UUID format for the drink ID
-2. Check if the custom drink exists in your Drinkaware account
-3. Try viewing the "Drinks Today" sensor attributes to see available custom drinks
-4. If using the dropdown, make sure you're replacing "custom" with your actual drink ID
-5. For custom drinks with custom ABV, try logging it through the Drinkaware app first
 
 ### Unknown Measure ID or Incompatible Measure
 
@@ -276,10 +280,11 @@ This comprehensive troubleshooting guide covers common issues you might encounte
 
 **Solution:**
 1. Force a refresh with the `drinkaware.refresh` service
-2. Custom drinks should appear in the `available_custom_drinks` attribute of the "Drinks Today" sensor
+2. Custom drinks should appear in the `available_custom_drinks` and `custom_drinks_reference` attributes of the "Drinks Today" sensor
 3. If not appearing, try logging the custom drink in the Drinkaware app
 4. Wait a few hours for the Drinkaware cache to update
-5. In version 0.1.8+, the integration periodically refreshes the drinks cache
+5. In version 0.3.0+, the integration periodically refreshes the drinks cache
+6. Check if the custom drink appears in the Drinkaware app itself
 
 ## API Limitations
 
@@ -305,6 +310,7 @@ This comprehensive troubleshooting guide covers common issues you might encounte
         - service: drinkaware.log_drink
           data:
             account_name: "YourAccountName"
+            drink_type_selector: "standard"
             drink_id: "..."
             measure_id: "..."
   ```
@@ -403,10 +409,35 @@ Here are some common error codes you might see in the logs and what they mean:
 
 **Solution:**
 1. Check the release notes for breaking changes
-2. Since version 0.1.8, service parameters changed from separate `standard_drink`/`custom_drink_id` to a single `drink_id`
-3. Update your scripts and automations to use the new parameter names
-4. Clear your browser cache to ensure you're seeing the updated UI
-5. Restart Home Assistant after updating
+2. Since version 0.3.0, the service parameters have changed to use `drink_type_selector` and separate fields for standard and custom drinks
+3. Update your scripts and automations to use the new parameter structure:
+   ```yaml
+   # Before (version 0.2.x and earlier):
+   service: drinkaware.log_drink
+   data:
+     account_name: "YourAccountName"
+     drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"
+     measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+   
+   # After (version 0.3.0+):
+   service: drinkaware.log_drink
+   data:
+     account_name: "YourAccountName"
+     drink_type_selector: "standard"
+     drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"
+     measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+   ```
+4. For custom drink IDs, use this format:
+   ```yaml
+   service: drinkaware.log_drink
+   data:
+     account_name: "YourAccountName"
+     drink_type_selector: "custom"
+     custom_drink_id: "12345678-ABCD-1234-5678-123456789ABC"
+     measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
+   ```
+5. Clear your browser cache to ensure you're seeing the updated UI
+6. Restart Home Assistant after updating
 
 ### Integration Missing After Update
 

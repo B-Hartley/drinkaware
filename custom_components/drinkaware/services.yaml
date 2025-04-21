@@ -32,7 +32,7 @@ log_drink_free_day:
       example: true
       selector:
         boolean:
-
+        
 log_drink:
   name: Log drink
   description: Record a drink in your Drinkaware tracking
@@ -52,15 +52,23 @@ log_drink:
       selector:
         config_entry:
           integration: drinkaware
+    # Remove the drink_type_selector field
     drink_id:
-      name: Drink Type
-      description: "The drink type to log. Select from standard options or enter a custom ID."
-      required: true
+      name: Standard Drink Type
+      description: "Select a standard drink type from the list (use this OR custom drink ID)"
+      required: false
       example: "Lager"
       selector:
         select:
           options: !include drinkoptions.yaml
           mode: dropdown
+    custom_drink_id:
+      name: Custom Drink ID
+      description: "Enter a custom drink ID (use this OR standard drink type)"
+      required: false
+      example: "12345678-ABCD-1234-5678-123456789ABC"
+      selector:
+        text:
     measure_id:
       name: Measure Type
       description: "The measure to use (make sure it's compatible with the selected drink type)"
@@ -133,15 +141,23 @@ delete_drink:
       selector:
         config_entry:
           integration: drinkaware
+    # Remove the drink_type_selector field
     drink_id:
-      name: Drink Type
-      description: "The drink type to delete. Select from standard options or enter a custom ID."
-      required: true
+      name: Standard Drink Type
+      description: "Select a standard drink type from the list (use this OR custom drink ID)"
+      required: false
       example: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"
       selector:
         select:
           options: !include drinkoptions.yaml
           mode: dropdown
+    custom_drink_id:
+      name: Custom Drink ID
+      description: "Enter a custom drink ID (use this OR standard drink type)"
+      required: false
+      example: "12345678-ABCD-1234-5678-123456789ABC"
+      selector:
+        text:
     measure_id:
       name: Measure Type
       description: "The measure of the drink to delete (must be compatible with the selected drink type)"

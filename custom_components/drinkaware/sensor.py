@@ -336,7 +336,7 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                 "End Date": today,
                 "Days Included": 7
             }
-        
+               
         elif key == "drinks_today":
             today = datetime.now().strftime("%Y-%m-%d")
             
@@ -366,6 +366,8 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                     name = drink.get("name", "Unknown Drink")
                     quantity = drink.get("quantity", 0)
                     abv = drink.get("abv", 0)
+                    drink_id = drink.get("drinkId", "")
+                    measure_id = drink.get("measureId", "")
                     
                     # Get measure name from different possible locations
                     measure_name = drink.get("measureName", "")
@@ -387,7 +389,7 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                             else:
                                 measure_name = f"{int(measure_size * 1000)}ml"
                     
-                    formatted_drink = f"{quantity}x {name} ({measure_name}, {abv}% ABV)"
+                    formatted_drink = f"{quantity}x {name} ({measure_name}, {abv}% ABV) - Drink ID: {drink_id}, Measure ID: {measure_id}"
                     formatted_drinks.append(formatted_drink)
                 
                 attrs["Detailed Drinks"] = formatted_drinks
@@ -395,7 +397,7 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                 # Also add raw data in a separate attribute
                 attrs["Raw Drink Data"] = drinks
             
-            # NEW CODE: Add available drinks as attributes
+            # Add available drinks as attributes
             standard_drinks = []
             custom_drinks = []
             
@@ -448,7 +450,39 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                                     }
                                 })
             
+            # Create a more user-friendly version of the custom drinks
+            user_friendly_custom_drinks = []
+            for drink in custom_drinks:
+                drink_id = drink.get("id", "")
+                title = drink.get("title", "Unknown")
+                abv = drink.get("abv", 0)
+                
+                # Create a user-friendly entry with the most important information
+                user_friendly_drink = {
+                    "name": title,
+                    "drink_id": drink_id,
+                    "abv": abv
+                }
+                
+                # Add measures if available
+                if "measures" in drink and drink["measures"]:
+                    measure_list = []
+                    for measure in drink["measures"]:
+                        measure_list.append({
+                            "name": measure.get("title", "Unknown"),
+                            "measure_id": measure.get("id", ""),
+                            "size_ml": measure.get("size_ml", 0)
+                        })
+                    user_friendly_drink["measures"] = measure_list
+                elif "measure" in drink:
+                    user_friendly_drink["measures"] = [{
+                        "name": drink["measure"].get("title", "Unknown"),
+                        "measure_id": drink["measure"].get("id", ""),
+                        "size_ml": drink["measure"].get("size_ml", 0)
+                    }]
+                    
+                user_friendly_custom_drinks.append(user_friendly_drink)
+            
             attrs["available_standard_drinks"] = standard_drinks
             attrs["available_custom_drinks"] = custom_drinks
-                
-        return attrs
+            attrs["custom_drinks_reference"] = user_friendly_custom_drinks        

@@ -229,25 +229,29 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
         account_name = service_call.data.get(ATTR_ACCOUNT_NAME)
         
-        # Get drink ID directly from ATTR_DRINK_TYPE
-        drink_type = service_call.data.get(ATTR_DRINK_TYPE)
+        # Get the inferred drink type selector from validation
+        drink_type_selector = service_call.data.get("drink_type_selector", "standard")
         
-        # Handle "custom" value for drink_id - prompt user to enter the actual ID
-        if drink_type == "custom":
-            raise HomeAssistantError(
-                "When selecting 'Custom Drink ID', please enter the actual ID directly instead of selecting 'custom'"
-            )
+        # Determine which drink ID to use based on the inferred selector
+        if drink_type_selector == "standard":
+            # Get drink ID from the dropdown
+            drink_type = service_call.data.get(ATTR_DRINK_TYPE)
+            if not drink_type:
+                raise HomeAssistantError(
+                    "No standard drink type selected. Please select a drink from the dropdown."
+                )
+        else:  # custom
+            # Get drink ID from the custom input
+            drink_type = service_call.data.get("custom_drink_id")
+            if not drink_type:
+                raise HomeAssistantError(
+                    "No custom drink ID provided. Please enter a valid drink ID."
+                )
         
         # Get measure ID
         drink_measure = service_call.data.get(ATTR_DRINK_MEASURE)
         if not drink_measure:
             raise HomeAssistantError("You must specify a measure_id")
-            
-        # Handle "custom" value for measure_id
-        if drink_measure == "custom":
-            raise HomeAssistantError(
-                "When using a custom measure, enter the actual ID instead of selecting 'custom'"
-            )
         
         # Get other parameters
         abv = service_call.data.get(ATTR_DRINK_ABV)
@@ -337,30 +341,34 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             await coordinator.async_refresh()
         except Exception as err:
             _LOGGER.error(f"Error logging drink: {err}")
-            raise HomeAssistantError(f"Error logging drink: {err}")            
+            raise HomeAssistantError(f"Error logging drink: {err}")
             
     async def async_delete_drink(service_call) -> None:
         """Delete a drink from Drinkaware."""
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
         account_name = service_call.data.get(ATTR_ACCOUNT_NAME)
         
-        # Get drink ID directly from ATTR_DRINK_TYPE
-        drink_type = service_call.data.get(ATTR_DRINK_TYPE)
+        # Get the inferred drink type selector from validation
+        drink_type_selector = service_call.data.get("drink_type_selector", "standard")
         
-        # Handle "custom" value for drink_id - prompt user to enter the actual ID
-        if drink_type == "custom":
-            raise HomeAssistantError(
-                "When selecting 'Custom Drink ID', please enter the actual ID directly instead of selecting 'custom'"
-            )
+        # Determine which drink ID to use based on the inferred selector
+        if drink_type_selector == "standard":
+            # Get drink ID from the dropdown
+            drink_type = service_call.data.get(ATTR_DRINK_TYPE)
+            if not drink_type:
+                raise HomeAssistantError(
+                    "No standard drink type selected. Please select a drink from the dropdown."
+                )
+        else:  # custom
+            # Get drink ID from the custom input
+            drink_type = service_call.data.get("custom_drink_id")
+            if not drink_type:
+                raise HomeAssistantError(
+                    "No custom drink ID provided. Please enter a valid drink ID."
+                )
         
         drink_measure = service_call.data[ATTR_DRINK_MEASURE]
         date = service_call.data.get(ATTR_DATE, datetime.now().date())
-        
-        # Handle "custom" value for measure_id
-        if drink_measure == "custom":
-            raise HomeAssistantError(
-                "When using a custom measure, enter the actual ID instead of selecting 'custom'"
-            )
         
         coordinator = get_coordinator_by_name_or_id(hass, entry_id, account_name)
         if not coordinator:

@@ -12,6 +12,7 @@ I have developed this for personal use and it is not affiliated with or authoriz
 - View your self-assessment scores
 - See detailed list of drinks consumed today
 - Log new drinks and drink-free days via services
+- Support for custom drink IDs
 - Remove logged drinks when needed
 
 ## Installation
@@ -80,11 +81,26 @@ The integration provides the following services to interact with your Drinkaware
 Mark a specific day as alcohol-free in your Drinkaware tracking:
 
 ```yaml
+service: drinkaware.log_drink_free_day
+data:
+  account_name: "Bruce"  # Or use entry_id instead
+  date: "2025-04-18"  # Optional, defaults to today
+  remove_drinks: true  # Optional, removes existing drinks before marking as drink-free
+```
+
+# Updated service examples for README.md
+
+### Log Drink
+
+Record a drink in your Drinkaware tracking. You can use either standard drinks from the dropdown or custom drink IDs:
+
+```yaml
+# Using a standard drink
 service: drinkaware.log_drink
 data:
   account_name: "Bruce"  # Or use entry_id instead
-  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (or select from dropdown)
-  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (or select from dropdown)
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (select from dropdown)
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
   abv: 4.5  # Optional
   name: "My Craft IPA"  # Optional custom name (only works with custom ABV)
   quantity: 1  # Optional, defaults to 1
@@ -92,17 +108,13 @@ data:
   auto_remove_dfd: true  # Optional, removes drink-free day mark if present
 ```
 
-### Log Drink
-
-Record a drink in your Drinkaware tracking:
-
 ```yaml
+# Using a custom drink ID
 service: drinkaware.log_drink
 data:
   account_name: "Bruce"  # Or use entry_id instead
-  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (or select from dropdown)
-  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (or select from dropdown)
-  abv: 4.5  # Optional
+  custom_drink_id: "12345678-ABCD-1234-5678-123456789ABC"  # Custom drink ID from Drinks Today sensor
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
   quantity: 1  # Optional, defaults to 1
   date: "2025-04-18"  # Optional, defaults to today
   auto_remove_dfd: true  # Optional, removes drink-free day mark if present
@@ -113,13 +125,28 @@ data:
 Remove a recorded drink from your tracking:
 
 ```yaml
+# Using a standard drink
 service: drinkaware.delete_drink
 data:
   account_name: "Bruce"  # Or use entry_id instead
-  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (or select from dropdown)
-  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (or select from dropdown)
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (select from dropdown)
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
   date: "2025-04-18"  # Optional, defaults to today
 ```
+
+```yaml
+# Using a custom drink ID
+service: drinkaware.delete_drink
+data:
+  account_name: "Bruce"  # Or use entry_id instead
+  custom_drink_id: "12345678-ABCD-1234-5678-123456789ABC"  # Custom drink ID from Drinks Today sensor
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
+  date: "2025-04-18"  # Optional, defaults to today
+```
+
+### Finding Custom Drink IDs
+
+Custom drink IDs can be found in the attributes of the "Drinks Today" sensor. Go to Developer Tools > States, find your Drinks Today sensor, and look for the `custom_drinks_reference` attribute which lists all available custom drinks with their IDs.
 
 ### Refresh Data
 
@@ -173,6 +200,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Version History
 
+- **0.2.2** - Added support for custom drink IDs in service UI
 - **0.2.1** - Added validation for drink and measure compatibility
 - **0.2.0** - Added ability to set custom names for drinks when specifying custom ABV
 - **0.1.8** - Added dropdown menus for drink and measure selection in services
