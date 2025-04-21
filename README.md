@@ -80,11 +80,16 @@ The integration provides the following services to interact with your Drinkaware
 Mark a specific day as alcohol-free in your Drinkaware tracking:
 
 ```yaml
-service: drinkaware.log_drink_free_day
+service: drinkaware.log_drink
 data:
   account_name: "Bruce"  # Or use entry_id instead
+  drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (or select from dropdown)
+  measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (or select from dropdown)
+  abv: 4.5  # Optional
+  name: "My Craft IPA"  # Optional custom name (only works with custom ABV)
+  quantity: 1  # Optional, defaults to 1
   date: "2025-04-18"  # Optional, defaults to today
-  remove_drinks: true  # Optional, removes existing drinks first
+  auto_remove_dfd: true  # Optional, removes drink-free day mark if present
 ```
 
 ### Log Drink
@@ -168,6 +173,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Version History
 
+- **0.2.1** - Added validation for drink and measure compatibility
+- **0.2.0** - Added ability to set custom names for drinks when specifying custom ABV
 - **0.1.8** - Added dropdown menus for drink and measure selection in services
 - **0.1.7** - Fixed issues with custom drink measure descriptions and drink-free day functionality
 - **0.1.6** - Previous release

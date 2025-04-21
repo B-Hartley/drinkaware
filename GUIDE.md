@@ -128,6 +128,7 @@ Record a drink in your Drinkaware tracking.
 - `drink_id`: (Required) The drink type to log. Can be selected from dropdown menu or entered as a custom ID.
 - `measure_id`: (Required) The measure to use. Can be selected from dropdown menu or entered as a custom ID.
 - `abv`: (Optional) The alcohol percentage (will use default if not specified)
+- `name`: (Optional) Custom name for the drink (only works when specifying a custom ABV)
 - `quantity`: (Optional) The number of drinks of this type (defaults to 1)
 - `date`: (Optional) The date to log the drink (defaults to today)
 - `auto_remove_dfd`: (Optional) Automatically remove the drink-free day mark if present (defaults to false)
@@ -140,6 +141,7 @@ data:
   drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (can be selected from dropdown)
   measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (can be selected from dropdown)
   abv: 4.5
+  name: "Local Craft IPA"  # Custom name (only works with custom ABV)
   quantity: 2
   date: "2025-04-18"
   auto_remove_dfd: true
@@ -308,9 +310,9 @@ To find the ID of a custom drink:
 - You can also use a network capture tool like MITM Proxy to inspect the traffic from the Drinkaware app
 - Look for the `drinkId` parameter when a drink is added
 
-### Creating Custom Drinks with Different ABV
+### Creating Custom Drinks with Different ABV and Names
 
-When logging a drink with a custom ABV that differs from the default, the integration will automatically create a custom drink:
+Since version 0.1.9, you can now provide a custom name when logging a drink with a custom ABV. This allows you to create personalized drink names that will appear in your tracking:
 
 ```yaml
 service: drinkaware.log_drink
@@ -319,10 +321,15 @@ data:
   drink_id: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"  # Lager
   measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
   abv: 5.2  # Different from default 4.0%
+  name: "Craft IPA from Local Brewery"  # Custom name for this drink
   quantity: 1
 ```
 
-This will create a custom version of Lager with 5.2% ABV. The custom drink will be cached and can be used again.
+This will create a custom version of Lager with 5.2% ABV and the name "Craft IPA from Local Brewery". The custom drink will be cached and can be used again. Note that:
+
+- The custom name only works when also specifying a custom ABV
+- The name appears in the Drinkaware app and in the "Drinks Today" sensor
+- If you don't provide a name but do provide custom ABV, it will use the original drink name
 
 ## Example Scripts and Automations
 

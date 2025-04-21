@@ -24,67 +24,84 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from . import DrinkAwareDataUpdateCoordinator, DOMAIN
+from .const import (
+    RISK_LEVEL,
+    TOTAL_SCORE,
+    DRINK_FREE_DAYS,
+    DRINK_FREE_STREAK,
+    DAYS_TRACKED,
+    GOALS_ACHIEVED,
+    GOAL_PROGRESS,
+    WEEKLY_UNITS,
+    LAST_DRINK_DATE,
+    SLEEP_QUALITY,
+    RISK_LEVEL_LOW,
+    RISK_LEVEL_INCREASING,
+    RISK_LEVEL_HIGH,
+    RISK_LEVEL_DEPENDENCY,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
+# Use constants for risk levels from the const.py file
 RISK_LEVELS = {
-    "low": "Low Risk",
-    "increasing": "Increasing Risk",
-    "high": "High Risk",
-    "possible_dependency": "Possible Dependency"
+    RISK_LEVEL_LOW: "Low Risk",
+    RISK_LEVEL_INCREASING: "Increasing Risk",
+    RISK_LEVEL_HIGH: "High Risk",
+    RISK_LEVEL_DEPENDENCY: "Possible Dependency"
 }
 
 SENSOR_DESCRIPTIONS = [
     SensorEntityDescription(
-        key="risk_level",
+        key=RISK_LEVEL,
         name="Risk Level",
         icon="mdi:alert-circle",
     ),
     SensorEntityDescription(
-        key="total_score",
+        key=TOTAL_SCORE,
         name="Self Assessment Score",
         icon="mdi:counter",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="drink_free_days",
+        key=DRINK_FREE_DAYS,
         name="Drink Free Days",
         icon="mdi:calendar-check",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="drink_free_streak",
+        key=DRINK_FREE_STREAK,
         name="Current Drink Free Streak",
         icon="mdi:fire",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="days_tracked",
+        key=DAYS_TRACKED,
         name="Days Tracked",
         icon="mdi:calendar-clock",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="goals_achieved",
+        key=GOALS_ACHIEVED,
         name="Goals Achieved",
         icon="mdi:trophy",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="goal_progress",
+        key=GOAL_PROGRESS,
         name="Current Goal Progress",
         icon="mdi:progress-check",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
     ),
     SensorEntityDescription(
-        key="weekly_units",
+        key=WEEKLY_UNITS,
         name="Weekly Units",
         icon="mdi:cup",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="last_drink_date",
+        key=LAST_DRINK_DATE,
         name="Last Drink Date",
         icon="mdi:glass-wine",
         device_class=SensorDeviceClass.DATE,
@@ -164,33 +181,33 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
             
         key = self.entity_description.key
         
-        if key == "risk_level" and "assessment" in self.coordinator.data:
+        if key == RISK_LEVEL and "assessment" in self.coordinator.data:
             risk_level = self.coordinator.data["assessment"].get("riskLevel")
             return RISK_LEVELS.get(risk_level, risk_level)
             
-        elif key == "total_score" and "assessment" in self.coordinator.data:
+        elif key == TOTAL_SCORE and "assessment" in self.coordinator.data:
             return self.coordinator.data["assessment"].get("totalScore")
             
-        elif key == "drink_free_days" and "stats" in self.coordinator.data:
+        elif key == DRINK_FREE_DAYS and "stats" in self.coordinator.data:
             return self.coordinator.data["stats"].get("drinkFreeDays", {}).get("total", 0)
             
-        elif key == "drink_free_streak" and "stats" in self.coordinator.data:
+        elif key == DRINK_FREE_STREAK and "stats" in self.coordinator.data:
             return self.coordinator.data["stats"].get("drinkFreeDays", {}).get("streakCurrent", 0)
             
-        elif key == "days_tracked" and "stats" in self.coordinator.data:
+        elif key == DAYS_TRACKED and "stats" in self.coordinator.data:
             return self.coordinator.data["stats"].get("daysTracked", {}).get("total", 0)
             
-        elif key == "goals_achieved" and "stats" in self.coordinator.data:
+        elif key == GOALS_ACHIEVED and "stats" in self.coordinator.data:
             return self.coordinator.data["stats"].get("goalsAchieved", 0)
             
-        elif key == "goal_progress" and "goals" in self.coordinator.data:
+        elif key == GOAL_PROGRESS and "goals" in self.coordinator.data:
             for goal in self.coordinator.data["goals"]:
                 if goal.get("type") == "drinkFreeDays":
                     if goal.get("target", 0) > 0:
                         return round((goal.get("progress", 0) / goal.get("target", 1)) * 100)
             return 0
             
-        elif key == "weekly_units" and "summary" in self.coordinator.data:
+        elif key == WEEKLY_UNITS and "summary" in self.coordinator.data:
             total_units = 0
             # Get current date in the same format as in the API (YYYY-MM-DD)
             today = datetime.now().strftime("%Y-%m-%d")
@@ -206,7 +223,7 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
             
             return round(total_units, 1)
             
-        elif key == "last_drink_date" and "summary" in self.coordinator.data:
+        elif key == LAST_DRINK_DATE and "summary" in self.coordinator.data:
             last_drink_date = None
             for day in self.coordinator.data["summary"]:
                 if not day.get("drinkFreeDay", True):
@@ -268,7 +285,7 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
             
         key = self.entity_description.key
         
-        if key == "risk_level" and "assessment" in self.coordinator.data:
+        if key == RISK_LEVEL and "assessment" in self.coordinator.data:
             assessment = self.coordinator.data["assessment"]
             scores = {
                 "Frequency": assessment.get("frequencyScore"),
@@ -285,22 +302,22 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
             attrs.update(scores)
             attrs["Assessment Date"] = assessment.get("created")
             
-        elif key == "drink_free_days" and "stats" in self.coordinator.data:
+        elif key == DRINK_FREE_DAYS and "stats" in self.coordinator.data:
             attrs["Highest Streak"] = self.coordinator.data["stats"].get("drinkFreeDays", {}).get("streakHighest", 0)
             
-        elif key == "days_tracked" and "stats" in self.coordinator.data:
+        elif key == DAYS_TRACKED and "stats" in self.coordinator.data:
             attrs["Current Streak"] = self.coordinator.data["stats"].get("daysTracked", {}).get("streakCurrent", 0)
             attrs["Highest Streak"] = self.coordinator.data["stats"].get("daysTracked", {}).get("streakHighest", 0)
             attrs["Tracking Since"] = self.coordinator.data["stats"].get("trackingSince")
             
-        elif key == "goal_progress" and "goals" in self.coordinator.data:
+        elif key == GOAL_PROGRESS and "goals" in self.coordinator.data:
             for goal in self.coordinator.data["goals"]:
                 if goal.get("type") == "drinkFreeDays":
                     attrs["Target"] = goal.get("target")
                     attrs["Progress"] = goal.get("progress")
                     attrs["Start Date"] = goal.get("startDate")
                     
-        elif key == "weekly_units" and "summary" in self.coordinator.data:
+        elif key == WEEKLY_UNITS and "summary" in self.coordinator.data:
             # Add drink details by day
             for day in self.coordinator.data["summary"]:
                 date = day.get("date")

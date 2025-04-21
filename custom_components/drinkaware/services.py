@@ -32,9 +32,14 @@ from .const import (
     ATTR_ACCOUNT_NAME,
 )
 
+from .drink_constants import (
+    DEFAULT_ABV_VALUES,
+    MEASURE_DESCRIPTIONS,
+    DRINK_NAMES,
+)
+
 from .utils import get_entry_id_by_account_name
 from .dynamic_services import (
-    DEFAULT_ABV_VALUES,
     update_last_used_account,
     async_get_drink_free_day_schema,
     async_get_log_drink_schema,
@@ -42,27 +47,10 @@ from .dynamic_services import (
     async_get_remove_drink_free_day_schema,
     async_get_log_sleep_quality_schema,
     async_get_refresh_schema,
+    validate_drink_measure_compatibility,
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-# Dictionary to map measure IDs to human-readable descriptions
-MEASURE_DESCRIPTIONS = {
-    "B59DCD68-96FF-4B4C-BA69-3707D085C407": "Pint (568ml)",
-    "174F45D7-745A-45F0-9D44-88DA1075CE79": "Half pint (284ml)",
-    "6B56A1FB-33A1-4E51-BED7-536751DE56BC": "Small bottle/can (330ml)",
-    "0CB11B53-6E3C-4C47-A2E9-68BA40DFFE13": "Bottle/can (440ml)",
-    "8F185B18-2A82-4D1A-A1F7-20E01D5E2FEC": "Bottle (500ml)",
-    "03D87F35-A1DF-40EE-9398-FA1CA55DD894": "Large bottle (660ml)",
-    "0E40AE5F-098D-4826-ADCA-298A6A14F514": "Small wine glass (125ml)",
-    "E586C800-24CA-4942-837A-4CD2CBF8338A": "Medium wine glass (175ml)",
-    "6450132A-F73F-414A-83BB-43C37B40272F": "Large wine glass (250ml)",
-    "B6CFC69E-0E85-4F82-A109-155801BB7C79": "Champagne glass (125ml)",
-    "A8B1FA3D-25A2-4685-92E9-DE9D19407CE3": "Medium champagne glass (187ml)",
-    "A83406D4-741F-49B4-B310-8B7DEB8B072F": "Single spirit measure (25ml)",
-    "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1": "Double spirit measure (50ml)",
-    "021703DD-248C-4A51-ACFD-0CE97540C8EC": "Small port/sherry glass (75ml)",
-}
 
 def require_entry_id_or_account_name(value):
     """Validate that either entry_id or account_name is provided."""
@@ -263,6 +251,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         
         # Get other parameters
         abv = service_call.data.get(ATTR_DRINK_ABV)
+        custom_name = service_call.data.get("name")  # Get optional custom name
         quantity = service_call.data.get(ATTR_DRINK_QUANTITY, 1)  # Default to 1 if not specified
         date = service_call.data.get(ATTR_DATE, datetime.now().date())
         auto_remove_dfd = service_call.data.get("auto_remove_dfd", False)  # Default to False
@@ -271,7 +260,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if not coordinator:
             raise HomeAssistantError(
                 "No matching Drinkaware integration found. Please specify a valid entry_id or account_name"
-            )         
+            )       
         try:
             # If auto_remove_dfd is True, check if day is marked as drink-free and remove that mark first
             if auto_remove_dfd:
@@ -332,16 +321,16 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             
             if should_increment:
                 # Use POST with quantityAdjustment to add a drink
-                await add_drink(coordinator, drink_type, drink_measure, abv if create_custom else None, date)
+                await add_drink(coordinator, drink_type, drink_measure, abv if create_custom else None, date, custom_name)
                 _LOGGER.info(f"Added 1 drink using quantityAdjustment")
                 
                 # If quantity > 1, add additional drinks
                 for _ in range(1, quantity):
-                    await add_drink(coordinator, drink_type, drink_measure, abv if create_custom else None, date)
+                    await add_drink(coordinator, drink_type, drink_measure, abv if create_custom else None, date, custom_name)
                     _LOGGER.info(f"Added additional drink")
             else:
                 # Use PUT with quantity to set an absolute value
-                await set_drink_quantity(coordinator, drink_type, drink_measure, abv if create_custom else None, quantity, date)
+                await set_drink_quantity(coordinator, drink_type, drink_measure, abv if create_custom else None, quantity, date, custom_name)
                 _LOGGER.info(f"Set drink quantity to {quantity}")
             
             # Trigger refresh to update the sensors with new data
@@ -657,7 +646,7 @@ async def create_custom_drink(coordinator, drink_type, title, abv):
         _LOGGER.error(f"Exception creating custom drink: {str(err)}")
         raise
 
-async def add_drink(coordinator, drink_type, drink_measure, abv, date):
+async def add_drink(coordinator, drink_type, drink_measure, abv, date, custom_name=None):
     """Add a single drink to Drinkaware using quantityAdjustment."""
     date_str = date.strftime("%Y-%m-%d")
     
@@ -666,8 +655,8 @@ async def add_drink(coordinator, drink_type, drink_measure, abv, date):
         try:
             # Get original drink info to get the title
             # For simplicity, we'll use the drink_type as the title if we can't find the original
-            title = "Custom Drink"
-            if hasattr(coordinator, 'drinks_cache') and coordinator.drinks_cache:
+            title = custom_name if custom_name else "Custom Drink"
+            if not custom_name and hasattr(coordinator, 'drinks_cache') and coordinator.drinks_cache:
                 # Look in categories first
                 if "categories" in coordinator.drinks_cache:
                     for category in coordinator.drinks_cache.get("categories", []):
@@ -714,7 +703,7 @@ async def add_drink(coordinator, drink_type, drink_measure, abv, date):
         _LOGGER.info(f"Successfully added drink for {date_str} (new quantity: {result.get('quantity', 0)})")
         return True, result.get("quantity", 0)
 
-async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quantity, date):
+async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quantity, date, custom_name=None):
     """Set the absolute quantity of a drink type for a specific day."""
     date_str = date.strftime("%Y-%m-%d")
     
@@ -723,8 +712,8 @@ async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quanti
         try:
             # Get original drink info to get the title
             # For simplicity, we'll use the drink_type as the title if we can't find the original
-            title = "Custom Drink"
-            if hasattr(coordinator, 'drinks_cache') and coordinator.drinks_cache:
+            title = custom_name if custom_name else "Custom Drink"
+            if not custom_name and hasattr(coordinator, 'drinks_cache') and coordinator.drinks_cache:
                 # Check in categories
                 if "categories" in coordinator.drinks_cache:
                     for category in coordinator.drinks_cache.get("categories", []):

@@ -18,131 +18,17 @@ from .const import (
     ATTR_SLEEP_QUALITY,
 )
 
+from .drink_constants import (
+    DEFAULT_ABV_VALUES,
+    DRINK_MEASURE_COMPATIBILITY,
+    MEASURE_DESCRIPTIONS,
+    DRINK_NAMES,
+)
+
 _LOGGER = logging.getLogger(__name__)
 
 # Store the last used account
 _LAST_USED_ACCOUNT = None
-
-# Mapping of drink types to compatible measure types
-DRINK_MEASURE_COMPATIBILITY = {
-    # Beer/Lager/Ale
-    "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7": [  # Lager
-        "B59DCD68-96FF-4B4C-BA69-3707D085C407",  # Pint
-        "174F45D7-745A-45F0-9D44-88DA1075CE79",  # Half pint
-        "6B56A1FB-33A1-4E51-BED7-536751DE56BC",  # Small bottle/can (330ml)
-        "0CB11B53-6E3C-4C47-A2E9-68BA40DFFE13",  # Bottle/can (440ml)
-        "8F185B18-2A82-4D1A-A1F7-20E01D5E2FEC",  # Bottle (500ml)
-        "03D87F35-A1DF-40EE-9398-FA1CA55DD894",  # Large bottle (660ml)
-    ],
-    "D4F06BD4-1F61-468B-AE86-C6CC2D56E021": [  # Beer
-        "B59DCD68-96FF-4B4C-BA69-3707D085C407",  # Pint
-        "174F45D7-745A-45F0-9D44-88DA1075CE79",  # Half pint
-        "6B56A1FB-33A1-4E51-BED7-536751DE56BC",  # Small bottle/can (330ml)
-        "0CB11B53-6E3C-4C47-A2E9-68BA40DFFE13",  # Bottle/can (440ml)
-        "8F185B18-2A82-4D1A-A1F7-20E01D5E2FEC",  # Bottle (500ml)
-        "03D87F35-A1DF-40EE-9398-FA1CA55DD894",  # Large bottle (660ml)
-    ],
-    "1F8DF28A-5F05-470E-833B-06C499965C99": [  # Ale/stout
-        "B59DCD68-96FF-4B4C-BA69-3707D085C407",  # Pint
-        "174F45D7-745A-45F0-9D44-88DA1075CE79",  # Half pint
-        "6B56A1FB-33A1-4E51-BED7-536751DE56BC",  # Small bottle/can (330ml)
-        "0CB11B53-6E3C-4C47-A2E9-68BA40DFFE13",  # Bottle/can (440ml)
-        "8F185B18-2A82-4D1A-A1F7-20E01D5E2FEC",  # Bottle (500ml)
-        "03D87F35-A1DF-40EE-9398-FA1CA55DD894",  # Large bottle (660ml)
-    ],
-    # Wine
-    "E3DEDBFD-63CE-492D-8E3E-9C24010227D8": [  # White Wine
-        "0E40AE5F-098D-4826-ADCA-298A6A14F514",  # Small wine glass (125ml)
-        "E586C800-24CA-4942-837A-4CD2CBF8338A",  # Medium wine glass (175ml)
-        "6450132A-F73F-414A-83BB-43C37B40272F",  # Large wine glass (250ml)
-    ],
-    "19E82B28-9AD5-4546-A966-13B27EC6E4FB": [  # Red Wine
-        "0E40AE5F-098D-4826-ADCA-298A6A14F514",  # Small wine glass (125ml)
-        "E586C800-24CA-4942-837A-4CD2CBF8338A",  # Medium wine glass (175ml)
-        "6450132A-F73F-414A-83BB-43C37B40272F",  # Large wine glass (250ml)
-    ],
-    "FA3B43D0-A418-4F4D-8FC1-218E8DA81918": [  # Rosé Wine
-        "0E40AE5F-098D-4826-ADCA-298A6A14F514",  # Small wine glass (125ml)
-        "E586C800-24CA-4942-837A-4CD2CBF8338A",  # Medium wine glass (175ml)
-        "6450132A-F73F-414A-83BB-43C37B40272F",  # Large wine glass (250ml)
-    ],
-    # Champagne/Prosecco
-    "61C3F476-24D1-46DB-9FA0-613ED4082531": [  # Champagne
-        "B6CFC69E-0E85-4F82-A109-155801BB7C79",  # Champagne glass (125ml)
-        "A8B1FA3D-25A2-4685-92E9-DE9D19407CE3",  # Medium champagne glass (187ml)
-    ],
-    "5184149E-450E-4A63-92E5-19AD7F49FCD1": [  # Prosecco
-        "B6CFC69E-0E85-4F82-A109-155801BB7C79",  # Champagne glass (125ml)
-        "A8B1FA3D-25A2-4685-92E9-DE9D19407CE3",  # Medium champagne glass (187ml)
-    ],
-    # Spirits
-    "0E3CA732-21D6-4631-A60C-155C2BB85C18": [  # Vodka
-        "A83406D4-741F-49B4-B310-8B7DEB8B072F",  # Single spirit measure (25ml)
-        "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1",  # Double spirit measure (50ml)
-    ],
-    "FECCEBB8-68D1-4BF1-B42F-7BB6C919B0F0": [  # Gin
-        "A83406D4-741F-49B4-B310-8B7DEB8B072F",  # Single spirit measure (25ml)
-        "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1",  # Double spirit measure (50ml)
-    ],
-    "32B22A73-D900-43E1-AAB6-8ADC27590B5D": [  # Tequila
-        "A83406D4-741F-49B4-B310-8B7DEB8B072F",  # Single spirit measure (25ml)
-        "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1",  # Double spirit measure (50ml)
-    ],
-    "780B45E2-26D6-4F55-A0C1-75868835D672": [  # Rum
-        "A83406D4-741F-49B4-B310-8B7DEB8B072F",  # Single spirit measure (25ml)
-        "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1",  # Double spirit measure (50ml)
-    ],
-    "2AAE4A2E-8C0A-40E1-BCDE-EB986111D2DE": [  # Whisk(e)y
-        "A83406D4-741F-49B4-B310-8B7DEB8B072F",  # Single spirit measure (25ml)
-        "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1",  # Double spirit measure (50ml)
-    ],
-    "E473445D-2B75-47DA-9978-24C80093B1D0": [  # Brandy
-        "A83406D4-741F-49B4-B310-8B7DEB8B072F",  # Single spirit measure (25ml)
-        "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1",  # Double spirit measure (50ml)
-    ],
-    "300546E3-DB89-49DC-B4B5-8ED96EB18C12": [  # Other Spirit
-        "A83406D4-741F-49B4-B310-8B7DEB8B072F",  # Single spirit measure (25ml)
-        "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1",  # Double spirit measure (50ml)
-    ],
-    # Port/Sherry
-    "F8486573-6F92-4B63-BAEB-3E76B750E14D": [  # Port/Sherry
-        "021703DD-248C-4A51-ACFD-0CE97540C8EC",  # Small port/sherry glass (75ml)
-    ],
-    # Cider
-    "61AD633A-7366-4497-BD36-9078466F00FE": [  # Cider
-        "B59DCD68-96FF-4B4C-BA69-3707D085C407",  # Pint
-        "174F45D7-745A-45F0-9D44-88DA1075CE79",  # Half pint
-        "6B56A1FB-33A1-4E51-BED7-536751DE56BC",  # Small bottle/can (330ml)
-        "0CB11B53-6E3C-4C47-A2E9-68BA40DFFE13",  # Bottle/can (440ml)
-        "8F185B18-2A82-4D1A-A1F7-20E01D5E2FEC",  # Bottle (500ml)
-    ],
-    # Alcopop
-    "0B2A65CA-5EC4-46B6-9E4D-6E0DDC8D57B8": [  # Alcopop
-        "6B56A1FB-33A1-4E51-BED7-536751DE56BC",  # Small bottle/can (330ml)
-    ],
-}
-
-# Mapping of default ABV values for standard drinks
-DEFAULT_ABV_VALUES = {
-    "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7": 4.0,  # Lager
-    "D4F06BD4-1F61-468B-AE86-C6CC2D56E021": 5.0,  # Beer
-    "1F8DF28A-5F05-470E-833B-06C499965C99": 4.5,  # Ale/stout
-    "E3DEDBFD-63CE-492D-8E3E-9C24010227D8": 13.0,  # White Wine
-    "19E82B28-9AD5-4546-A966-13B27EC6E4FB": 13.0,  # Red Wine
-    "FA3B43D0-A418-4F4D-8FC1-218E8DA81918": 13.0,  # Rosé Wine
-    "61C3F476-24D1-46DB-9FA0-613ED4082531": 12.0,  # Champagne
-    "5184149E-450E-4A63-92E5-19AD7F49FCD1": 12.0,  # Prosecco
-    "0E3CA732-21D6-4631-A60C-155C2BB85C18": 40.0,  # Vodka
-    "FECCEBB8-68D1-4BF1-B42F-7BB6C919B0F0": 40.0,  # Gin
-    "32B22A73-D900-43E1-AAB6-8ADC27590B5D": 50.0,  # Tequila
-    "780B45E2-26D6-4F55-A0C1-75868835D672": 40.0,  # Rum
-    "2AAE4A2E-8C0A-40E1-BCDE-EB986111D2DE": 40.0,  # Whisk(e)y
-    "E473445D-2B75-47DA-9978-24C80093B1D0": 40.0,  # Brandy
-    "300546E3-DB89-49DC-B4B5-8ED96EB18C12": 40.0,  # Other Spirit
-    "F8486573-6F92-4B63-BAEB-3E76B750E14D": 18.0,  # Port/Sherry
-    "61AD633A-7366-4497-BD36-9078466F00FE": 4.5,  # Cider
-    "0B2A65CA-5EC4-46B6-9E4D-6E0DDC8D57B8": 4.0,  # Alcopop
-}
 
 @callback
 def update_last_used_account(account_name):
@@ -269,20 +155,8 @@ def async_get_compatible_measures(hass: HomeAssistant, drink_id):
     
     # Define all known measures
     all_measures = [
-        {"value": "B59DCD68-96FF-4B4C-BA69-3707D085C407", "label": "Pint (568ml)"},
-        {"value": "174F45D7-745A-45F0-9D44-88DA1075CE79", "label": "Half pint (284ml)"},
-        {"value": "6B56A1FB-33A1-4E51-BED7-536751DE56BC", "label": "Small bottle/can (330ml)"},
-        {"value": "0CB11B53-6E3C-4C47-A2E9-68BA40DFFE13", "label": "Bottle/can (440ml)"},
-        {"value": "8F185B18-2A82-4D1A-A1F7-20E01D5E2FEC", "label": "Bottle (500ml)"},
-        {"value": "03D87F35-A1DF-40EE-9398-FA1CA55DD894", "label": "Large bottle (660ml)"},
-        {"value": "0E40AE5F-098D-4826-ADCA-298A6A14F514", "label": "Small wine glass (125ml)"},
-        {"value": "E586C800-24CA-4942-837A-4CD2CBF8338A", "label": "Medium wine glass (175ml)"},
-        {"value": "6450132A-F73F-414A-83BB-43C37B40272F", "label": "Large wine glass (250ml)"},
-        {"value": "B6CFC69E-0E85-4F82-A109-155801BB7C79", "label": "Champagne glass (125ml)"},
-        {"value": "A8B1FA3D-25A2-4685-92E9-DE9D19407CE3", "label": "Medium champagne glass (187ml)"},
-        {"value": "A83406D4-741F-49B4-B310-8B7DEB8B072F", "label": "Single spirit measure (25ml)"},
-        {"value": "FCCC81A2-3BFF-45C0-832F-BCF73E81D0D1", "label": "Double spirit measure (50ml)"},
-        {"value": "021703DD-248C-4A51-ACFD-0CE97540C8EC", "label": "Small port/sherry glass (75ml)"},
+        {"value": measure_id, "label": desc}
+        for measure_id, desc in MEASURE_DESCRIPTIONS.items()
     ]
     
     # Filter measures by compatibility
@@ -359,12 +233,14 @@ def async_get_log_drink_schema(hass: HomeAssistant):
         vol.Required(ATTR_DRINK_TYPE): cv.string,
         vol.Required(ATTR_DRINK_MEASURE): cv.string,
         vol.Optional(ATTR_DRINK_ABV): vol.Coerce(float),
+        vol.Optional("name"): cv.string,  # Add optional custom name parameter
         vol.Optional(ATTR_DRINK_QUANTITY): vol.Coerce(int),
         vol.Optional(ATTR_DATE): cv.date,
         vol.Optional("auto_remove_dfd", default=False): cv.boolean,
     }
     
-    return schema_dict
+    # Return the schema with validation
+    return vol.Schema(vol.All(schema_dict, validate_drink_measure_compatibility))
 
 @callback
 def async_get_delete_drink_schema(hass: HomeAssistant):
@@ -380,4 +256,50 @@ def async_get_delete_drink_schema(hass: HomeAssistant):
         vol.Optional(ATTR_DATE): cv.date,
     }
     
-    return schema_dict
+    # Return the schema with validation
+    return vol.Schema(vol.All(schema_dict, validate_drink_measure_compatibility))
+    
+def validate_drink_measure_compatibility(value):
+    """Validate that the drink and measure types are compatible."""
+    drink_id = value.get(ATTR_DRINK_TYPE)
+    measure_id = value.get(ATTR_DRINK_MEASURE)
+    
+    # Skip validation if either is not provided
+    if not drink_id or not measure_id:
+        return value
+    
+    # Skip validation if using custom values
+    if drink_id == "custom" or measure_id == "custom":
+        return value
+    
+    # Get compatible measure IDs for this drink
+    compatible_measure_ids = DRINK_MEASURE_COMPATIBILITY.get(drink_id, [])
+    
+    # If we don't have compatibility info for this drink, assume it's compatible
+    if not compatible_measure_ids:
+        return value
+    
+    # Check if the measure is compatible
+    if measure_id not in compatible_measure_ids:
+        # Get human-readable measure description
+        measure_description = MEASURE_DESCRIPTIONS.get(measure_id, "Unknown measure")
+        
+        # Get human-readable drink name
+        drink_name = DRINK_NAMES.get(drink_id, "Unknown drink")
+        
+        # Get a list of compatible measure descriptions
+        compatible_measures = []
+        for m_id in compatible_measure_ids:
+            if m_id in MEASURE_DESCRIPTIONS:
+                compatible_measures.append(MEASURE_DESCRIPTIONS[m_id])
+            else:
+                compatible_measures.append(m_id)
+        
+        # Format the error message
+        error_msg = f"Incompatible drink and measure combination: {drink_name} cannot be served in {measure_description}. "
+        if compatible_measures:
+            error_msg += f"Compatible measures for {drink_name} are: {', '.join(compatible_measures)}"
+        
+        raise vol.Invalid(error_msg)
+    
+    return value

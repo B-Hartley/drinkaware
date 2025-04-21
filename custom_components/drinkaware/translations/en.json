@@ -117,6 +117,10 @@
           "name": "Measure Type",
           "description": "The measure to use"
         },
+        "name": {
+          "name": "Custom Name",
+          "description": "Optional custom name for the drink (only works with custom ABV)"
+        },
         "abv": {
           "name": "ABV",
           "description": "The alcohol percentage (optional, will use default if not specified)"
