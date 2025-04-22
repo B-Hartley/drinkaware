@@ -28,12 +28,6 @@ def get_entry_id_by_account_name(hass, account_name):
     # Not found
     return None
 
-def update_last_used_account(account_name):
-    """Update the last used account name."""
-    global _LAST_USED_ACCOUNT
-    _LAST_USED_ACCOUNT["name"] = account_name
-    _LAST_USED_ACCOUNT["timestamp"] = datetime.now()
-
 def get_default_account_name(hass):
     """Get the default account name to use for service calls.
     
