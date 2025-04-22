@@ -198,6 +198,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Version History
 
+- **0.2.4** - re-instated sensor attributes that seem to vanish on previous updates
 - **0.2.3** - Removed account_name parameter from services, making config entry ID the standard way to select an integration
 - **0.2.2** - Added support for custom drink IDs in service UI
 - **0.2.1** - Added validation for drink and measure compatibility

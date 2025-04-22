@@ -167,6 +167,7 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
             "model": "Account",
             "sw_version": "1.0",
         }
+        self._attributes = {}  # Initialize attributes dictionary
         
     @property
     def available(self) -> bool:
@@ -269,19 +270,20 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                 # Refresh the activity data for today
                 self.coordinator._activity_cache[today] = await self.coordinator._fetch_activity_for_day(today)
         
+        # Update extra attributes
+        self._update_attributes()
         await super().async_update()
 
-    @property
-    def extra_state_attributes(self) -> Dict[str, Any]:
-        """Return the state attributes."""
-        attrs = {}
+    def _update_attributes(self):
+        """Update the extra attributes dictionary."""
+        self._attributes = {}  # Reset attributes
         
         # Add account information
-        attrs["account_name"] = self.coordinator.account_name
-        attrs["email"] = self.coordinator.email
+        self._attributes["account_name"] = self.coordinator.account_name
+        self._attributes["email"] = self.coordinator.email
         
         if not self.coordinator.data:
-            return attrs
+            return
             
         key = self.entity_description.key
         
@@ -299,39 +301,40 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                 "Injury": assessment.get("injuryScore"),
                 "Concerns from Others": assessment.get("relativeConcernedScore"),
             }
-            attrs.update(scores)
-            attrs["Assessment Date"] = assessment.get("created")
+            self._attributes.update(scores)
+            self._attributes["Assessment Date"] = assessment.get("created")
             
         elif key == DRINK_FREE_DAYS and "stats" in self.coordinator.data:
-            attrs["Highest Streak"] = self.coordinator.data["stats"].get("drinkFreeDays", {}).get("streakHighest", 0)
+            self._attributes["Highest Streak"] = self.coordinator.data["stats"].get("drinkFreeDays", {}).get("streakHighest", 0)
             
         elif key == DAYS_TRACKED and "stats" in self.coordinator.data:
-            attrs["Current Streak"] = self.coordinator.data["stats"].get("daysTracked", {}).get("streakCurrent", 0)
-            attrs["Highest Streak"] = self.coordinator.data["stats"].get("daysTracked", {}).get("streakHighest", 0)
-            attrs["Tracking Since"] = self.coordinator.data["stats"].get("trackingSince")
+            self._attributes["Current Streak"] = self.coordinator.data["stats"].get("daysTracked", {}).get("streakCurrent", 0)
+            self._attributes["Highest Streak"] = self.coordinator.data["stats"].get("daysTracked", {}).get("streakHighest", 0)
+            self._attributes["Tracking Since"] = self.coordinator.data["stats"].get("trackingSince")
             
         elif key == GOAL_PROGRESS and "goals" in self.coordinator.data:
             for goal in self.coordinator.data["goals"]:
                 if goal.get("type") == "drinkFreeDays":
-                    attrs["Target"] = goal.get("target")
-                    attrs["Progress"] = goal.get("progress")
-                    attrs["Start Date"] = goal.get("startDate")
+                    self._attributes["Target"] = goal.get("target")
+                    self._attributes["Progress"] = goal.get("progress")
+                    self._attributes["Start Date"] = goal.get("startDate")
                     
         elif key == WEEKLY_UNITS and "summary" in self.coordinator.data:
             # Add drink details by day
+            today = datetime.now().strftime("%Y-%m-%d")
+            six_days_ago = (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d")
+            
             for day in self.coordinator.data["summary"]:
                 date = day.get("date")
-                if date:
-                    attrs[date] = {
+                if date and date >= six_days_ago and date <= today:
+                    self._attributes[date] = {
                         "Units": day.get("units", 0),
                         "Drinks": day.get("drinks", 0),
                         "Drink Free": day.get("drinkFreeDay", True)
                     }
             
             # Add additional information about the weekly calculation period
-            today = datetime.now().strftime("%Y-%m-%d")
-            six_days_ago = (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d")
-            attrs["Weekly Period"] = {
+            self._attributes["Weekly Period"] = {
                 "Start Date": six_days_ago,
                 "End Date": today,
                 "Days Included": 7
@@ -341,16 +344,16 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
             today = datetime.now().strftime("%Y-%m-%d")
             
             # Initialize attributes with default values
-            attrs["Today's Units"] = 0
-            attrs["Drink Free Day"] = True
-            attrs["Detailed Drinks"] = []
+            self._attributes["Today's Units"] = 0
+            self._attributes["Drink Free Day"] = True
+            self._attributes["Detailed Drinks"] = []
             
             # Check summary for high-level data
             if "summary" in self.coordinator.data:
                 for day in self.coordinator.data["summary"]:
                     if day.get("date") == today:
-                        attrs["Today's Units"] = day.get("units", 0)
-                        attrs["Drink Free Day"] = day.get("drinkFreeDay", True)
+                        self._attributes["Today's Units"] = day.get("units", 0)
+                        self._attributes["Drink Free Day"] = day.get("drinkFreeDay", True)
                         break
             
             # Check for detailed drink information
@@ -392,10 +395,10 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                     formatted_drink = f"{quantity}x {name} ({measure_name}, {abv}% ABV) - Drink ID: {drink_id}, Measure ID: {measure_id}"
                     formatted_drinks.append(formatted_drink)
                 
-                attrs["Detailed Drinks"] = formatted_drinks
+                self._attributes["Detailed Drinks"] = formatted_drinks
                 
                 # Also add raw data in a separate attribute
-                attrs["Raw Drink Data"] = drinks
+                self._attributes["Raw Drink Data"] = drinks
             
             # Add available drinks as attributes
             standard_drinks = []
@@ -483,6 +486,14 @@ class DrinkAwareSensor(CoordinatorEntity, SensorEntity):
                     
                 user_friendly_custom_drinks.append(user_friendly_drink)
             
-            attrs["available_standard_drinks"] = standard_drinks
-            attrs["available_custom_drinks"] = custom_drinks
-            attrs["custom_drinks_reference"] = user_friendly_custom_drinks        
+            self._attributes["available_standard_drinks"] = standard_drinks
+            self._attributes["available_custom_drinks"] = custom_drinks
+            self._attributes["custom_drinks_reference"] = user_friendly_custom_drinks
+            
+    @property
+    def extra_state_attributes(self) -> Dict[str, Any]:
+        """Return the state attributes."""
+        # Make sure attributes are updated
+        if not self._attributes:
+            self._update_attributes()
+        return self._attributes

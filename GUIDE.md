@@ -605,13 +605,3 @@ The integration communicates directly with the Drinkaware API using HTTPS. No da
 ### OAuth Security
 
 The OAuth authentication flow uses industry-standard PKCE (Proof Key for Code Exchange) to ensure secure token exchange, protecting your Drinkaware credentials.
-
-## Version History
-
-- **0.2.3** - Removed account_name parameter from services, making config entry ID the standard way to select an integration
-- **0.2.2** - Added support for custom drink IDs in service UI
-- **0.2.1** - Added validation for drink and measure compatibility
-- **0.2.0** - Added ability to set custom names for drinks when specifying custom ABV
-- **0.1.8** - Added dropdown menus for drink and measure selection in services
-- **0.1.7** - Fixed issues with custom drink measure descriptions and drink-free day functionality
-- **0.1.6** - Previous release
