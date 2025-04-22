@@ -1,0 +1,19 @@
+{
+  "assessments": [
+    {
+      "riskLevel": "low",
+      "totalScore": 5,
+      "frequencyScore": 1,
+      "unitNumberScore": 1,
+      "bingeFrequencyScore": 0,
+      "unableToStopScore": 0,
+      "expectationScore": 1,
+      "morningScore": 0,
+      "guiltScore": 1,
+      "memoryLossScore": 0,
+      "injuryScore": 0,
+      "relativeConcernedScore": 1,
+      "created": "2025-04-01T10:00:00Z"
+    }
+  ]
+}

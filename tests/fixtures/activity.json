@@ -1,0 +1,23 @@
+{
+  "activity": [
+    {
+      "drinkId": "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7",
+      "measureId": "B59DCD68-96FF-4B4C-BA69-3707D085C407",
+      "quantity": 1,
+      "name": "Lager",
+      "abv": 4.0,
+      "measureName": "Pint"
+    },
+    {
+      "drinkId": "E3DEDBFD-63CE-492D-8E3E-9C24010227D8",
+      "measureId": "E586C800-24CA-4942-837A-4CD2CBF8338A",
+      "quantity": 1,
+      "name": "White Wine",
+      "abv": 13.0,
+      "measureName": "Medium glass"
+    }
+  ],
+  "sleep": {
+    "quality": "average"
+  }
+}

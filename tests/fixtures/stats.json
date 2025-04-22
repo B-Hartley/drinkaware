@@ -1,0 +1,14 @@
+{
+  "drinkFreeDays": {
+    "total": 15,
+    "streakCurrent": 3,
+    "streakHighest": 5
+  },
+  "daysTracked": {
+    "total": 30,
+    "streakCurrent": 7,
+    "streakHighest": 10
+  },
+  "trackingSince": "2025-03-21T00:00:00Z",
+  "goalsAchieved": 2
+}

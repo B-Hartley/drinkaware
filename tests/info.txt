@@ -1,0 +1,66 @@
+Testing Framework for the Drinkaware Home Assistant Integration
+I've created a comprehensive testing framework for your Drinkaware Home Assistant integration. This will help you ensure the integration works correctly and avoid regressions when making changes.
+Overview of the Test Suite
+I've implemented tests for:
+
+Configuration Flow - Testing the setup wizard and OAuth authentication process
+Core Component - Testing initialization and lifecycle methods
+Data Coordinator - Testing API requests, token refresh, and data parsing
+Services - Testing all integration services (logging drinks, etc.)
+Sensors - Testing sensor values and attributes
+
+How to Set Up the Test Environment
+
+Create the test directories and files as structured in the files I've provided
+Install required testing packages:
+
+bashpip install pytest pytest-asyncio pytest-homeassistant-custom-component pytest-cov
+
+Set up the symbolic link for the custom component:
+
+bashmkdir -p custom_components
+ln -s /path/to/your/drinkaware custom_components/drinkaware
+How to Run the Tests
+The tests can be run using pytest:
+bash# Run all tests
+pytest -xvs tests/
+
+# Run a specific test file
+pytest -xvs tests/test_sensor.py
+
+# Run with coverage reporting
+pytest -xvs --cov=custom_components.drinkaware tests/
+Continuous Integration
+I've included a GitHub Actions workflow (.github/workflows/tests.yaml) that:
+
+Runs on every push and pull request
+Sets up the test environment
+Runs the test suite
+Reports test coverage to Codecov
+
+Understanding Test Results
+After running the tests, you'll see output showing:
+
+Whether each test passed or failed
+Details about any failures including line numbers and error messages
+A summary of how many tests passed, failed, or were skipped
+
+If you use the coverage option, you'll also see what percentage of your code is covered by tests.
+Troubleshooting
+If tests fail, check for:
+
+Incorrect imports or missing dependencies
+Changes to the API responses that don't match the test fixtures
+Asynchronous code not properly awaited
+Missing mocks for external dependencies
+
+The tests use mock data stored in the tests/fixtures/ directory. If the Drinkaware API changes, you'll need to update these fixture files to match the new response formats.
+Best Practices for Future Test Development
+
+Write tests for new features: When adding new functionality, write tests first (TDD approach)
+Keep fixtures updated: When the API changes, update the test fixtures
+Test error cases: Don't just test the happy path, test how the code handles errors
+Use parametrized tests: For similar functions with different inputs, use pytest's parametrize feature
+Maintain independence: Each test should be independent and not rely on the state from other tests
+
+These tests will help ensure your Home Assistant integration remains stable and reliable as you continue development.

@@ -1,0 +1,52 @@
+{
+  "activitySummaryDays": [
+    {
+      "date": "2025-04-22",
+      "drinks": 0,
+      "units": 0,
+      "drinkFreeDay": true
+    },
+    {
+      "date": "2025-04-21",
+      "drinks": 0,
+      "units": 0,
+      "drinkFreeDay": true
+    },
+    {
+      "date": "2025-04-20",
+      "drinks": 0,
+      "units": 0,
+      "drinkFreeDay": true
+    },
+    {
+      "date": "2025-04-19",
+      "drinks": 2,
+      "units": 4.5,
+      "drinkFreeDay": false
+    },
+    {
+      "date": "2025-04-18",
+      "drinks": 1,
+      "units": 2.3,
+      "drinkFreeDay": false
+    },
+    {
+      "date": "2025-04-17",
+      "drinks": 0,
+      "units": 0,
+      "drinkFreeDay": true
+    },
+    {
+      "date": "2025-04-16",
+      "drinks": 0,
+      "units": 0,
+      "drinkFreeDay": true
+    },
+    {
+      "date": "2025-04-15",
+      "drinks": 3,
+      "units": 6.8,
+      "drinkFreeDay": false
+    }
+  ]
+}
