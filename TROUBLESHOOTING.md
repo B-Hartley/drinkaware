@@ -466,4 +466,4 @@ For additional support, you can:
 - Contact the developer via the repository
 - Share your problem in the Home Assistant community forums
 
-Remember that this is a community-developed integration not officially affiliated with Drinkaware, so response times may vary.
+Remember that this is a community-developed integration not officially affiliated with Drinkaware, so response times may vary..
