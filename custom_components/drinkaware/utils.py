@@ -37,4 +37,4 @@ def get_default_account_name(hass):
         if hasattr(coordinator, 'account_name'):
             return coordinator.account_name
     
-    return ""
+    return none
