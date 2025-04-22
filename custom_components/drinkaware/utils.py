@@ -6,12 +6,6 @@ from datetime import datetime
 
 _LOGGER = logging.getLogger(__name__)
 
-# Store the last used account and when it was used
-_LAST_USED_ACCOUNT = {
-    "name": None,
-    "timestamp": None
-}
-
 def get_entry_id_by_account_name(hass, account_name):
     """Get entry_id for a given account name."""
     # Check if we have an account name mapping
