@@ -30,18 +30,7 @@ def get_entry_id_by_account_name(hass, account_name):
 
 def get_default_account_name(hass):
     """Get the default account name to use for service calls.
-    
-    First tries the most recently used account, then falls back
-    to the first configured account if necessary.
-    """
-    # Check if we have a recent account
-    if _LAST_USED_ACCOUNT["name"] is not None:
-        # Verify the account still exists
-        entry_id = get_entry_id_by_account_name(hass, _LAST_USED_ACCOUNT["name"])
-        if entry_id:
-            return _LAST_USED_ACCOUNT["name"]
-    
-    # If no recent account or it doesn't exist anymore, return the first one
+        
     for entry_id, coordinator in hass.data["drinkaware"].items():
         if entry_id == "account_name_map":
             continue
