@@ -2,17 +2,10 @@ log_drink_free_day:
   name: Log drink-free day
   description: Mark a specific day as alcohol-free in your Drinkaware tracking
   fields:
-    account_name:
-      name: Account Name
-      description: The name of your Drinkaware account (as entered during setup)
-      required: true
-      example: "Bruce"
-      selector:
-        text:
     entry_id:
       name: Config Entry ID
-      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
-      required: false
+      description: The Drinkaware integration to use
+      required: true
       example: "abc123"
       selector:
         config_entry:
@@ -37,17 +30,10 @@ log_drink:
   name: Log drink
   description: Record a drink in your Drinkaware tracking
   fields:
-    account_name:
-      name: Account Name
-      description: The name of your Drinkaware account (as entered during setup)
-      required: true
-      example: "Bruce"
-      selector:
-        text:
     entry_id:
       name: Config Entry ID
-      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
-      required: false
+      description: The Drinkaware integration to use
+      required: true
       example: "abc123"
       selector:
         config_entry:
@@ -126,17 +112,10 @@ delete_drink:
   name: Delete drink
   description: Remove a recorded drink from your Drinkaware tracking
   fields:
-    account_name:
-      name: Account Name
-      description: The name of your Drinkaware account (as entered during setup)
-      required: true
-      example: "Bruce"
-      selector:
-        text:
     entry_id:
       name: Config Entry ID
-      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
-      required: false
+      description: The Drinkaware integration to use
+      required: true
       example: "abc123"
       selector:
         config_entry:
@@ -179,17 +158,10 @@ remove_drink_free_day:
   name: Remove drink-free day
   description: Remove the drink-free day marking for a specific date
   fields:
-    account_name:
-      name: Account Name
-      description: The name of your Drinkaware account (as entered during setup)
-      required: true
-      example: "Bruce"
-      selector:
-        text:
     entry_id:
       name: Config Entry ID
-      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
-      required: false
+      description: The Drinkaware integration to use
+      required: true
       example: "abc123"
       selector:
         config_entry:
@@ -206,17 +178,10 @@ log_sleep_quality:
   name: Log sleep quality
   description: Record sleep quality for a specific date
   fields:
-    account_name:
-      name: Account Name
-      description: The name of your Drinkaware account (as entered during setup)
-      required: true
-      example: "Bruce"
-      selector:
-        text:
     entry_id:
       name: Config Entry ID
-      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
-      required: false
+      description: The Drinkaware integration to use
+      required: true
       example: "abc123"
       selector:
         config_entry:
@@ -248,16 +213,9 @@ refresh:
   name: Refresh data
   description: Manually refresh data from the Drinkaware API
   fields:
-    account_name:
-      name: Account Name
-      description: The name of your Drinkaware account (as entered during setup) - leave empty to refresh all accounts
-      required: false
-      example: "Bruce"
-      selector:
-        text:
     entry_id:
       name: Config Entry ID
-      description: (Optional) The Drinkaware config entry ID - only needed if account name is not specified
+      description: The Drinkaware integration to use (leave empty to refresh all integrations)
       required: false
       example: "abc123"
       selector:

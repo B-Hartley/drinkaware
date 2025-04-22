@@ -4,13 +4,9 @@
       "name": "Log drink-free day",
       "description": "Mark a specific day as alcohol-free in your Drinkaware tracking",
       "fields": {
-        "account_name": {
-          "name": "Account Name",
-          "description": "The name of your Drinkaware account (as entered during setup)"
-        },
         "entry_id": {
           "name": "Config Entry ID",
-          "description": "The Drinkaware config entry ID - only needed if account name is not specified"
+          "description": "The Drinkaware integration to use"
         },
         "date": {
           "name": "Date",
@@ -26,13 +22,9 @@
       "name": "Log drink",
       "description": "Record a drink in your Drinkaware tracking",
       "fields": {
-        "account_name": {
-          "name": "Account Name",
-          "description": "The name of your Drinkaware account (as entered during setup)"
-        },
         "entry_id": {
           "name": "Config Entry ID",
-          "description": "The Drinkaware config entry ID - only needed if account name is not specified"
+          "description": "The Drinkaware integration to use"
         },
         "drink_id": {
           "name": "Standard Drink Type",
@@ -72,13 +64,9 @@
       "name": "Delete drink",
       "description": "Remove a recorded drink from your Drinkaware tracking",
       "fields": {
-        "account_name": {
-          "name": "Account Name",
-          "description": "The name of your Drinkaware account (as entered during setup)"
-        },
         "entry_id": {
           "name": "Config Entry ID",
-          "description": "The Drinkaware config entry ID - only needed if account name is not specified"
+          "description": "The Drinkaware integration to use"
         },
         "drink_id": {
           "name": "Standard Drink Type",
@@ -102,13 +90,9 @@
       "name": "Remove drink-free day",
       "description": "Remove the drink-free day marking for a specific date",
       "fields": {
-        "account_name": {
-          "name": "Account Name",
-          "description": "The name of your Drinkaware account (as entered during setup)"
-        },
         "entry_id": {
           "name": "Config Entry ID",
-          "description": "The Drinkaware config entry ID - only needed if account name is not specified"
+          "description": "The Drinkaware integration to use"
         },
         "date": {
           "name": "Date",
@@ -120,13 +104,9 @@
       "name": "Log sleep quality",
       "description": "Record sleep quality for a specific date",
       "fields": {
-        "account_name": {
-          "name": "Account Name",
-          "description": "The name of your Drinkaware account (as entered during setup)"
-        },
         "entry_id": {
           "name": "Config Entry ID",
-          "description": "The Drinkaware config entry ID - only needed if account name is not specified"
+          "description": "The Drinkaware integration to use"
         },
         "quality": {
           "name": "Sleep Quality",
@@ -142,13 +122,9 @@
       "name": "Refresh data",
       "description": "Manually refresh data from the Drinkaware API",
       "fields": {
-        "account_name": {
-          "name": "Account Name",
-          "description": "The name of your Drinkaware account (as entered during setup) - leave empty to refresh all accounts"
-        },
         "entry_id": {
           "name": "Config Entry ID",
-          "description": "The Drinkaware config entry ID - only needed if account name is not specified"
+          "description": "The Drinkaware integration to use (leave empty to refresh all integrations)"
         }
       }
     }

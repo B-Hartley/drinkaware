@@ -37,27 +37,14 @@ def update_last_used_account(account_name):
     _LAST_USED_ACCOUNT = account_name
 
 @callback
-def async_get_first_account_name(hass: HomeAssistant) -> str:
-    """Get the preferred account name (recently used or first available)."""
-    global _LAST_USED_ACCOUNT
-    
-    # Check if we have a recent account
-    if _LAST_USED_ACCOUNT is not None:
-        # Verify the account still exists
-        for entry_id, coordinator in hass.data[DOMAIN].items():
-            if entry_id == "account_name_map":
-                continue
-            if (hasattr(coordinator, 'account_name') and 
-                coordinator.account_name.lower() == _LAST_USED_ACCOUNT.lower()):
-                return _LAST_USED_ACCOUNT
-    
-    # If no recent account or it doesn't exist anymore, return the first one
-    for entry_id, coordinator in hass.data[DOMAIN].items():
-        if entry_id == "account_name_map":
-            continue
-        if hasattr(coordinator, 'account_name'):
-            return coordinator.account_name
-    
+def async_get_first_config_entry(hass: HomeAssistant) -> str:
+    """Get the first available config entry ID."""
+    entries = [
+        entry_id for entry_id in hass.data[DOMAIN] 
+        if entry_id != "account_name_map"
+    ]
+    if entries:
+        return entries[0]
     return ""
 
 @callback
@@ -163,11 +150,10 @@ def async_get_compatible_measures(hass: HomeAssistant, drink_id):
 @callback
 def async_get_drink_free_day_schema(hass: HomeAssistant):
     """Get schema for drink free day service."""
-    first_account = async_get_first_account_name(hass)
+    first_entry = async_get_first_config_entry(hass)
     
     schema_dict = {
-        vol.Required(ATTR_ACCOUNT_NAME, default=first_account): cv.string,
-        vol.Optional(ATTR_ENTRY_ID): cv.string,
+        vol.Required(ATTR_ENTRY_ID, default=first_entry): cv.string,
         vol.Optional(ATTR_DATE): cv.date,
         vol.Optional("remove_drinks", default=False): cv.boolean,
     }
@@ -176,11 +162,10 @@ def async_get_drink_free_day_schema(hass: HomeAssistant):
 @callback
 def async_get_remove_drink_free_day_schema(hass: HomeAssistant):
     """Get schema for remove drink free day service."""
-    first_account = async_get_first_account_name(hass)
+    first_entry = async_get_first_config_entry(hass)
     
     schema_dict = {
-        vol.Required(ATTR_ACCOUNT_NAME, default=first_account): cv.string,
-        vol.Optional(ATTR_ENTRY_ID): cv.string,
+        vol.Required(ATTR_ENTRY_ID, default=first_entry): cv.string,
         vol.Optional(ATTR_DATE): cv.date,
     }
     return schema_dict
@@ -188,11 +173,10 @@ def async_get_remove_drink_free_day_schema(hass: HomeAssistant):
 @callback
 def async_get_log_sleep_quality_schema(hass: HomeAssistant):
     """Get schema for log sleep quality service."""
-    first_account = async_get_first_account_name(hass)
+    first_entry = async_get_first_config_entry(hass)
     
     schema_dict = {
-        vol.Required(ATTR_ACCOUNT_NAME, default=first_account): cv.string,
-        vol.Optional(ATTR_ENTRY_ID): cv.string,
+        vol.Required(ATTR_ENTRY_ID, default=first_entry): cv.string,
         vol.Required(ATTR_SLEEP_QUALITY): vol.In(["poor", "average", "great"]),
         vol.Optional(ATTR_DATE): cv.date,
     }
@@ -201,23 +185,21 @@ def async_get_log_sleep_quality_schema(hass: HomeAssistant):
 @callback
 def async_get_refresh_schema(hass: HomeAssistant):
     """Get schema for refresh service."""
-    first_account = async_get_first_account_name(hass)
+    first_entry = async_get_first_config_entry(hass)
     
     schema_dict = {
-        vol.Optional(ATTR_ACCOUNT_NAME, default=first_account): cv.string,
-        vol.Optional(ATTR_ENTRY_ID): cv.string,
+        vol.Optional(ATTR_ENTRY_ID, default=first_entry): cv.string,
     }
     return schema_dict
 
 @callback
 def async_get_log_drink_schema(hass: HomeAssistant):
     """Get schema for log drink service."""
-    first_account = async_get_first_account_name(hass)
+    first_entry = async_get_first_config_entry(hass)
     
     # Create schema with dynamic options if available
     schema_dict = {
-        vol.Required(ATTR_ACCOUNT_NAME, default=first_account): cv.string,
-        vol.Optional(ATTR_ENTRY_ID): cv.string,
+        vol.Required(ATTR_ENTRY_ID, default=first_entry): cv.string,
         # Remove the drink_type_selector, we'll infer from provided fields
         vol.Optional(ATTR_DRINK_TYPE): cv.string,
         vol.Optional("custom_drink_id"): cv.string,
@@ -258,12 +240,11 @@ def async_get_log_drink_schema(hass: HomeAssistant):
 @callback
 def async_get_delete_drink_schema(hass: HomeAssistant):
     """Get schema for delete drink service."""
-    first_account = async_get_first_account_name(hass)
+    first_entry = async_get_first_config_entry(hass)
     
     # Create schema with dynamic options if available
     schema_dict = {
-        vol.Required(ATTR_ACCOUNT_NAME, default=first_account): cv.string,
-        vol.Optional(ATTR_ENTRY_ID): cv.string,
+        vol.Required(ATTR_ENTRY_ID, default=first_entry): cv.string,
         # Remove the drink_type_selector, we'll infer from provided fields
         vol.Optional(ATTR_DRINK_TYPE): cv.string,
         vol.Optional("custom_drink_id"): cv.string,

@@ -105,8 +105,7 @@ The Drinkaware integration provides the following services:
 Mark a specific day as alcohol-free in your Drinkaware tracking.
 
 **Parameters:**
-- `account_name`: (Optional) The name of your Drinkaware account (as entered during setup)
-- `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
+- `entry_id`: (Required) The Drinkaware integration to use (select from dropdown)
 - `date`: (Optional) The date to mark as a drink-free day (defaults to today)
 - `remove_drinks`: (Optional) Automatically remove any existing drinks for the day before marking it as drink-free (defaults to false)
 
@@ -114,7 +113,7 @@ Mark a specific day as alcohol-free in your Drinkaware tracking.
 ```yaml
 service: drinkaware.log_drink_free_day
 data:
-  account_name: "Bruce"
+  entry_id: "abc123"  # Select from integration dropdown
   date: "2025-04-18"
   remove_drinks: true
 ```
@@ -124,8 +123,7 @@ data:
 Record a drink in your Drinkaware tracking.
 
 **Parameters:**
-- `account_name`: (Optional) The name of your Drinkaware account (as entered during setup)
-- `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
+- `entry_id`: (Required) The Drinkaware integration to use (select from dropdown)
 - `drink_id`: (Optional) The standard drink type to log from dropdown menu (use this OR custom_drink_id)
 - `custom_drink_id`: (Optional) A custom drink ID from the Drinks Today sensor (use this OR drink_id)
 - `measure_id`: (Required) The measure to use from dropdown menu
@@ -139,7 +137,7 @@ Record a drink in your Drinkaware tracking.
 ```yaml
 service: drinkaware.log_drink
 data:
-  account_name: "Bruce"
+  entry_id: "abc123"  # Select from integration dropdown
   drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (select from dropdown)
   measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
   abv: 4.5
@@ -153,7 +151,7 @@ data:
 ```yaml
 service: drinkaware.log_drink
 data:
-  account_name: "Bruce"
+  entry_id: "abc123"  # Select from integration dropdown
   custom_drink_id: "12345678-ABCD-1234-5678-123456789ABC"  # Custom drink ID from Drinks Today sensor
   measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
   quantity: 1
@@ -166,8 +164,7 @@ data:
 Remove a recorded drink from your Drinkaware tracking.
 
 **Parameters:**
-- `account_name`: (Optional) The name of your Drinkaware account (as entered during setup)
-- `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
+- `entry_id`: (Required) The Drinkaware integration to use (select from dropdown)
 - `drink_id`: (Optional) The standard drink type to delete from dropdown menu (use this OR custom_drink_id)
 - `custom_drink_id`: (Optional) A custom drink ID from the Drinks Today sensor (use this OR drink_id)
 - `measure_id`: (Required) The measure of the drink to delete from dropdown menu
@@ -177,7 +174,7 @@ Remove a recorded drink from your Drinkaware tracking.
 ```yaml
 service: drinkaware.delete_drink
 data:
-  account_name: "Bruce"
+  entry_id: "abc123"  # Select from integration dropdown
   drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer (select from dropdown)
   measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
   date: "2025-04-18"
@@ -187,7 +184,7 @@ data:
 ```yaml
 service: drinkaware.delete_drink
 data:
-  account_name: "Bruce"
+  entry_id: "abc123"  # Select from integration dropdown
   custom_drink_id: "12345678-ABCD-1234-5678-123456789ABC"  # Custom drink ID from Drinks Today sensor
   measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint (select from dropdown)
   date: "2025-04-18"
@@ -198,15 +195,14 @@ data:
 Remove the drink-free day marking for a specific date.
 
 **Parameters:**
-- `account_name`: (Optional) The name of your Drinkaware account (as entered during setup)
-- `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
+- `entry_id`: (Required) The Drinkaware integration to use (select from dropdown)
 - `date`: (Optional) The date to remove the drink-free day marking (defaults to today)
 
 **Example:**
 ```yaml
 service: drinkaware.remove_drink_free_day
 data:
-  account_name: "Bruce"
+  entry_id: "abc123"  # Select from integration dropdown
   date: "2025-04-18"
 ```
 
@@ -215,8 +211,7 @@ data:
 Record sleep quality for a specific date.
 
 **Parameters:**
-- `account_name`: (Optional) The name of your Drinkaware account (as entered during setup)
-- `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
+- `entry_id`: (Required) The Drinkaware integration to use (select from dropdown)
 - `quality`: (Required) The quality of sleep to record ("poor", "average", or "great")
 - `date`: (Optional) The date to log the sleep quality (defaults to today)
 
@@ -224,7 +219,7 @@ Record sleep quality for a specific date.
 ```yaml
 service: drinkaware.log_sleep_quality
 data:
-  account_name: "Bruce"
+  entry_id: "abc123"  # Select from integration dropdown
   quality: "average"
   date: "2025-04-18"
 ```
@@ -234,14 +229,13 @@ data:
 Manually refresh data from the Drinkaware API.
 
 **Parameters:**
-- `account_name`: (Optional) The name of your Drinkaware account (as entered during setup) - leave empty to refresh all accounts
-- `entry_id`: (Optional) The Drinkaware config entry ID (only needed if account name is not specified)
+- `entry_id`: (Optional) The Drinkaware integration to use (select from dropdown) - leave empty to refresh all integrations
 
 **Example:**
 ```yaml
 service: drinkaware.refresh
 data:
-  account_name: "Bruce"
+  entry_id: "abc123"  # Select from integration dropdown
 ```
 
 ## Available Drinks
@@ -320,7 +314,7 @@ Custom drinks are created within the Drinkaware app and are assigned unique IDs 
 
 ### Using Custom Drink IDs in Service Calls
 
-Since version 0.3.0, you can directly use custom drink IDs in service calls:
+You can directly use custom drink IDs in service calls:
 
 1. When calling the `log_drink` or `delete_drink` service, select "Custom drink ID (enter manually)" from the "Select drink type" dropdown
 2. Enter your custom drink ID in the "Custom Drink ID" field
@@ -345,13 +339,12 @@ Each drink in the `custom_drinks_reference` list includes:
 
 ### Creating Custom Drinks with Different ABV and Names
 
-Since version 0.2.0, you can provide a custom name when logging a drink with a custom ABV. This allows you to create personalized drink names that will appear in your tracking:
+You can provide a custom name when logging a drink with a custom ABV. This allows you to create personalized drink names that will appear in your tracking:
 
 ```yaml
 service: drinkaware.log_drink
 data:
-  account_name: "Bruce"
-  drink_type_selector: "standard"
+  entry_id: "abc123"  # Select from integration dropdown
   drink_id: "FAB60DBF-911F-4286-9C3E-0F0BCB40E3B7"  # Lager
   measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
   abv: 5.2  # Different from default 4.0%
@@ -384,8 +377,7 @@ script:
     sequence:
       - service: drinkaware.log_drink
         data:
-          account_name: "Bruce"
-          drink_type_selector: "standard"
+          entry_id: "abc123"  # Select from integration dropdown
           drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # Beer
           measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # Pint
           quantity: "{{ quantity }}"
@@ -402,8 +394,7 @@ script:
     sequence:
       - service: drinkaware.log_drink
         data:
-          account_name: "Bruce"
-          drink_type_selector: "standard"
+          entry_id: "abc123"  # Select from integration dropdown
           drink_id: "19E82B28-9AD5-4546-A966-13B27EC6E4FB"  # Red Wine
           measure_id: "E586C800-24CA-4942-837A-4CD2CBF8338A"  # Medium glass
           quantity: "{{ quantity }}"
@@ -430,8 +421,7 @@ script:
     sequence:
       - service: drinkaware.log_drink
         data:
-          account_name: "Bruce"
-          drink_type_selector: "custom"
+          entry_id: "abc123"  # Select from integration dropdown
           custom_drink_id: "{{ drink_id }}"
           measure_id: "{{ measure_id }}"
           quantity: "{{ quantity }}"
@@ -460,7 +450,7 @@ automation:
     action:
       - service: drinkaware.log_drink_free_day
         data:
-          account_name: "Bruce"
+          entry_id: "abc123"  # Select from integration dropdown
           date: "{{ (now() - timedelta(days=1)).strftime('%Y-%m-%d') }}"
 ```
 
@@ -475,7 +465,7 @@ automation:
     action:
       - service: drinkaware.refresh
         data:
-          account_name: "Bruce"
+          entry_id: "abc123"  # Select from integration dropdown
 ```
 
 ### Notification When Approaching Weekly Limit
@@ -553,7 +543,7 @@ automation:
    ```yaml
    service: drinkaware.log_drink_free_day
    data:
-     account_name: "Bruce"
+     entry_id: "abc123"  # Select from integration dropdown
      date: "2025-04-18"
      remove_drinks: true
    ```
@@ -567,8 +557,8 @@ automation:
 
 **Solution:**
 1. Make sure you're using the correct parameter names and structure:
-   - For standard drinks: use `drink_type_selector: "standard"` and `drink_id: "UUID"`
-   - For custom drinks: use `drink_type_selector: "custom"` and `custom_drink_id: "UUID"`
+   - For standard drinks: use `drink_id: "UUID"`
+   - For custom drinks: use `custom_drink_id: "UUID"`
 2. Don't provide both `drink_id` and `custom_drink_id` in the same service call
 3. If using the YAML service editor, ensure all fields match exactly what's expected
 
@@ -578,7 +568,7 @@ automation:
 
 **Solution:**
 1. Verify you're using the correct UUID format for the drink ID
-2. Make sure you've set `drink_type_selector: "custom"` and provided the ID in the `custom_drink_id` field
+2. Make sure you're providing the ID in the `custom_drink_id` field
 3. Refresh the Drinkaware data to ensure the custom drinks are up to date
 4. Check if the custom drink exists in your Drinkaware account by looking at the "Drinks Today" sensor attributes
 5. If the custom drink was recently created in the app, it might take time to appear in the integration
@@ -618,9 +608,10 @@ The OAuth authentication flow uses industry-standard PKCE (Proof Key for Code Ex
 
 ## Version History
 
-- **0.3.0** - Added support for custom drink IDs in service UI
+- **0.2.3** - Removed account_name parameter from services, making config entry ID the standard way to select an integration
+- **0.2.2** - Added support for custom drink IDs in service UI
 - **0.2.1** - Added validation for drink and measure compatibility
 - **0.2.0** - Added ability to set custom names for drinks when specifying custom ABV
 - **0.1.8** - Added dropdown menus for drink and measure selection in services
 - **0.1.7** - Fixed issues with custom drink measure descriptions and drink-free day functionality
-- **0.1.6** - Previous release		  
+- **0.1.6** - Previous release

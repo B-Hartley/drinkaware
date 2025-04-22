@@ -88,9 +88,9 @@ This comprehensive troubleshooting guide covers common issues you might encounte
 
 **Solution:**
 1. Make sure to give each account a unique and descriptive name during setup
-2. When using services, always specify the correct `account_name` parameter
-3. Use the `get_coordinator_by_name_or_id` function properly in your scripts/automations
-4. If needed, you can find the entry_id for each account in your Home Assistant configuration files or by inspecting the entity attributes
+2. When using services, always select the correct integration from the dropdown
+3. Note that as of version 0.3.0, services use the config entry ID dropdown instead of account names
+4. If needed, you can find the entry_id for each account in Developer Tools → States by looking at the entity attributes
 
 ### Entity Names Are Too Long
 
@@ -125,7 +125,7 @@ This comprehensive troubleshooting guide covers common issues you might encounte
    ```yaml
    service: drinkaware.refresh
    data:
-     account_name: "YourAccountName"
+     entry_id: "abc123"  # Select from integration dropdown
    ```
 3. Set up an automation to refresh more frequently if needed:
    ```yaml
@@ -137,7 +137,7 @@ This comprehensive troubleshooting guide covers common issues you might encounte
        action:
          - service: drinkaware.refresh
            data:
-             account_name: "YourAccountName"
+             entry_id: "abc123"  # Select from integration dropdown
    ```
 4. Check the Home Assistant logs for any errors during refresh
 
@@ -163,7 +163,7 @@ This comprehensive troubleshooting guide covers common issues you might encounte
    ```yaml
    service: drinkaware.log_drink
    data:
-     account_name: "YourAccountName"
+     entry_id: "abc123"  # Select from integration dropdown
      custom_drink_id: "12345678-ABCD-1234-5678-123456789ABC"
      measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
    ```
@@ -181,6 +181,7 @@ This comprehensive troubleshooting guide covers common issues you might encounte
    - For custom drinks: use `custom_drink_id: "UUID"`
 2. Don't provide both `drink_id` and `custom_drink_id` in the same service call (the standard drink will take precedence if both are provided)
 3. If using the YAML service editor, ensure all fields match exactly what's expected
+4. As of version 0.3.0, you must use the config entry ID dropdown to select the integration
 
 ### Can't See Dropdown Menus in Service UI
 
@@ -202,7 +203,7 @@ This comprehensive troubleshooting guide covers common issues you might encounte
    ```yaml
    service: drinkaware.log_drink_free_day
    data:
-     account_name: "YourAccountName"
+     entry_id: "abc123"  # Select from integration dropdown
      date: "2025-04-18"
      remove_drinks: true
    ```
@@ -211,7 +212,7 @@ This comprehensive troubleshooting guide covers common issues you might encounte
    # First delete all drinks
    service: drinkaware.delete_drink
    data:
-     account_name: "YourAccountName"
+     entry_id: "abc123"  # Select from integration dropdown
      drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"  # The ID of your drink
      measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"  # The measure ID
      date: "2025-04-18"
@@ -219,7 +220,7 @@ This comprehensive troubleshooting guide covers common issues you might encounte
    # Then mark as drink-free
    service: drinkaware.log_drink_free_day
    data:
-     account_name: "YourAccountName"
+     entry_id: "abc123"  # Select from integration dropdown
      date: "2025-04-18"
    ```
 3. If problems persist, check the logs for detailed error information
@@ -283,7 +284,7 @@ This comprehensive troubleshooting guide covers common issues you might encounte
 2. Custom drinks should appear in the `available_custom_drinks` and `custom_drinks_reference` attributes of the "Drinks Today" sensor
 3. If not appearing, try logging the custom drink in the Drinkaware app
 4. Wait a few hours for the Drinkaware cache to update
-5. In version 0.3.0+, the integration periodically refreshes the drinks cache
+5. The integration periodically refreshes the drinks cache
 6. Check if the custom drink appears in the Drinkaware app itself
 
 ## API Limitations
@@ -309,8 +310,7 @@ This comprehensive troubleshooting guide covers common issues you might encounte
             seconds: 5
         - service: drinkaware.log_drink
           data:
-            account_name: "YourAccountName"
-            drink_type_selector: "standard"
+            entry_id: "abc123"  # Select from integration dropdown
             drink_id: "..."
             measure_id: "..."
   ```
@@ -409,8 +409,7 @@ Here are some common error codes you might see in the logs and what they mean:
 
 **Solution:**
 1. Check the release notes for breaking changes
-2. Since version 0.3.0, the service parameters have changed to use `drink_type_selector` and separate fields for standard and custom drinks
-3. Update your scripts and automations to use the new parameter structure:
+2. As of version 0.3.0, the service parameters have changed to remove the account_name option:
    ```yaml
    # Before (version 0.2.x and earlier):
    service: drinkaware.log_drink
@@ -422,22 +421,20 @@ Here are some common error codes you might see in the logs and what they mean:
    # After (version 0.3.0+):
    service: drinkaware.log_drink
    data:
-     account_name: "YourAccountName"
-     drink_type_selector: "standard"
+     entry_id: "abc123"  # Select from integration dropdown
      drink_id: "D4F06BD4-1F61-468B-AE86-C6CC2D56E021"
      measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
    ```
-4. For custom drink IDs, use this format:
+3. For custom drink IDs (since version 0.3.0), use this format:
    ```yaml
    service: drinkaware.log_drink
    data:
-     account_name: "YourAccountName"
-     drink_type_selector: "custom"
+     entry_id: "abc123"  # Select from integration dropdown
      custom_drink_id: "12345678-ABCD-1234-5678-123456789ABC"
      measure_id: "B59DCD68-96FF-4B4C-BA69-3707D085C407"
    ```
-5. Clear your browser cache to ensure you're seeing the updated UI
-6. Restart Home Assistant after updating
+4. Clear your browser cache to ensure you're seeing the updated UI
+5. Restart Home Assistant after updating
 
 ### Integration Missing After Update
 

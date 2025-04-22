@@ -52,45 +52,36 @@ from .dynamic_services import (
 
 _LOGGER = logging.getLogger(__name__)
 
-def require_entry_id_or_account_name(value):
-    """Validate that either entry_id or account_name is provided."""
-    if ATTR_ENTRY_ID not in value and ATTR_ACCOUNT_NAME not in value:
-        raise vol.Invalid("Either entry_id or account_name must be provided")
+def validate_entry_id(value):
+    """Validate that entry_id is provided."""
+    if ATTR_ENTRY_ID not in value or not value[ATTR_ENTRY_ID]:
+        raise vol.Invalid("Config Entry ID must be provided")
+    
+    # Remove account_name if it was provided (for backward compatibility)
+    if ATTR_ACCOUNT_NAME in value:
+        value.pop(ATTR_ACCOUNT_NAME)
+    
     return value
 
-def get_coordinator_by_name_or_id(hass, entry_id=None, account_name=None):
-    """Get coordinator by either entry_id or account_name."""
+def get_coordinator_by_entry_id(hass, entry_id):
+    """Get coordinator by entry_id."""
     if entry_id and entry_id in hass.data[DOMAIN]:
         coordinator = hass.data[DOMAIN][entry_id]
         if hasattr(coordinator, 'account_name'):
             update_last_used_account(coordinator.account_name)
         return coordinator
     
-    if account_name:
-        # Check the account name map first for more efficient lookup
-        mapped_entry_id = get_entry_id_by_account_name(hass, account_name)
-        if mapped_entry_id and mapped_entry_id in hass.data[DOMAIN]:
-            update_last_used_account(account_name)
-            return hass.data[DOMAIN][mapped_entry_id]
-            
-        # Fallback to searching if not in the map
-        for entry_id, coordinator in hass.data[DOMAIN].items():
-            if entry_id == "account_name_map":
-                continue  # Skip the mapping dictionary
-            if hasattr(coordinator, 'account_name') and coordinator.account_name.lower() == account_name.lower():
-                update_last_used_account(account_name)
-                return coordinator
-    
-    # If we have only one entry, return that
-    entries = [
-        entry_id for entry_id in hass.data[DOMAIN] 
-        if entry_id != "account_name_map"
-    ]
-    if len(entries) == 1:
-        coordinator = hass.data[DOMAIN][entries[0]]
-        if hasattr(coordinator, 'account_name'):
-            update_last_used_account(coordinator.account_name)
-        return coordinator
+    # If we have only one entry and no specific entry_id was provided, return that
+    if not entry_id:
+        entries = [
+            entry_id for entry_id in hass.data[DOMAIN] 
+            if entry_id != "account_name_map"
+        ]
+        if len(entries) == 1:
+            coordinator = hass.data[DOMAIN][entries[0]]
+            if hasattr(coordinator, 'account_name'):
+                update_last_used_account(coordinator.account_name)
+            return coordinator
     
     return None
 
@@ -100,14 +91,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     async def async_log_drink_free_day(service_call) -> None:
         """Log a drink-free day to Drinkaware."""
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
-        account_name = service_call.data.get(ATTR_ACCOUNT_NAME)
         date = service_call.data.get(ATTR_DATE, datetime.now().date())
         remove_drinks = service_call.data.get("remove_drinks", False)
         
-        coordinator = get_coordinator_by_name_or_id(hass, entry_id, account_name)
+        coordinator = get_coordinator_by_entry_id(hass, entry_id)
         if not coordinator:
             raise HomeAssistantError(
-                "No matching Drinkaware integration found. Please specify a valid entry_id or account_name"
+                "No matching Drinkaware integration found. Please specify a valid config entry ID."
             )
         
         try:
@@ -227,7 +217,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     async def async_log_drink(service_call) -> None:
         """Log a drink to Drinkaware."""
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
-        account_name = service_call.data.get(ATTR_ACCOUNT_NAME)
         
         # Get the inferred drink type selector from validation
         drink_type_selector = service_call.data.get("drink_type_selector", "standard")
@@ -260,10 +249,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         date = service_call.data.get(ATTR_DATE, datetime.now().date())
         auto_remove_dfd = service_call.data.get("auto_remove_dfd", False)  # Default to False
         
-        coordinator = get_coordinator_by_name_or_id(hass, entry_id, account_name)
+        coordinator = get_coordinator_by_entry_id(hass, entry_id)
         if not coordinator:
             raise HomeAssistantError(
-                "No matching Drinkaware integration found. Please specify a valid entry_id or account_name"
+                "No matching Drinkaware integration found. Please specify a valid config entry ID."
             )       
         try:
             # If auto_remove_dfd is True, check if day is marked as drink-free and remove that mark first
@@ -346,7 +335,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     async def async_delete_drink(service_call) -> None:
         """Delete a drink from Drinkaware."""
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
-        account_name = service_call.data.get(ATTR_ACCOUNT_NAME)
         
         # Get the inferred drink type selector from validation
         drink_type_selector = service_call.data.get("drink_type_selector", "standard")
@@ -370,10 +358,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         drink_measure = service_call.data[ATTR_DRINK_MEASURE]
         date = service_call.data.get(ATTR_DATE, datetime.now().date())
         
-        coordinator = get_coordinator_by_name_or_id(hass, entry_id, account_name)
+        coordinator = get_coordinator_by_entry_id(hass, entry_id)
         if not coordinator:
             raise HomeAssistantError(
-                "No matching Drinkaware integration found. Please specify a valid entry_id or account_name"
+                "No matching Drinkaware integration found. Please specify a valid config entry ID."
             )
             
         try:
@@ -430,13 +418,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     async def async_remove_drink_free_day(service_call) -> None:
         """Remove a drink-free day marking from Drinkaware."""
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
-        account_name = service_call.data.get(ATTR_ACCOUNT_NAME)
         date = service_call.data.get(ATTR_DATE, datetime.now().date())
         
-        coordinator = get_coordinator_by_name_or_id(hass, entry_id, account_name)
+        coordinator = get_coordinator_by_entry_id(hass, entry_id)
         if not coordinator:
             raise HomeAssistantError(
-                "No matching Drinkaware integration found. Please specify a valid entry_id or account_name"
+                "No matching Drinkaware integration found. Please specify a valid config entry ID."
             )
             
         try:
@@ -450,14 +437,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     async def async_log_sleep_quality(service_call) -> None:
         """Log sleep quality to Drinkaware."""
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
-        account_name = service_call.data.get(ATTR_ACCOUNT_NAME)
         quality = service_call.data[ATTR_SLEEP_QUALITY]
         date = service_call.data.get(ATTR_DATE, datetime.now().date())
         
-        coordinator = get_coordinator_by_name_or_id(hass, entry_id, account_name)
+        coordinator = get_coordinator_by_entry_id(hass, entry_id)
         if not coordinator:
             raise HomeAssistantError(
-                "No matching Drinkaware integration found. Please specify a valid entry_id or account_name"
+                "No matching Drinkaware integration found. Please specify a valid config entry ID."
             )
             
         try:
@@ -471,10 +457,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     async def async_refresh(service_call) -> None:
         """Refresh Drinkaware data."""
         entry_id = service_call.data.get(ATTR_ENTRY_ID)
-        account_name = service_call.data.get(ATTR_ACCOUNT_NAME)
         
-        # If no account name or entry ID is specified, refresh all accounts
-        if not entry_id and not account_name:
+        # If no entry ID is specified, refresh all accounts
+        if not entry_id:
             refresh_tasks = []
             for entry_id, coordinator in hass.data[DOMAIN].items():
                 if entry_id == "account_name_map":
@@ -488,10 +473,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             return
         
         # Otherwise, refresh the specified account
-        coordinator = get_coordinator_by_name_or_id(hass, entry_id, account_name)
+        coordinator = get_coordinator_by_entry_id(hass, entry_id)
         if not coordinator:
             raise HomeAssistantError(
-                "No matching Drinkaware integration found. Please specify a valid entry_id or account_name"
+                "No matching Drinkaware integration found. Please specify a valid config entry ID."
             )
             
         try:
@@ -504,27 +489,27 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     # Register services with validation
     drink_free_day_schema = vol.Schema(vol.All(
         async_get_drink_free_day_schema(hass),
-        require_entry_id_or_account_name
+        validate_entry_id
     ))
     
     log_drink_schema = vol.Schema(vol.All(
         async_get_log_drink_schema(hass),
-        require_entry_id_or_account_name
+        validate_entry_id
     ))
     
     delete_drink_schema = vol.Schema(vol.All(
         async_get_delete_drink_schema(hass),
-        require_entry_id_or_account_name
+        validate_entry_id
     ))
     
     remove_drink_free_day_schema = vol.Schema(vol.All(
         async_get_remove_drink_free_day_schema(hass),
-        require_entry_id_or_account_name
+        validate_entry_id
     ))
     
     log_sleep_quality_schema = vol.Schema(vol.All(
         async_get_log_sleep_quality_schema(hass),
-        require_entry_id_or_account_name
+        validate_entry_id
     ))
     
     refresh_schema = vol.Schema(
@@ -816,4 +801,4 @@ async def log_sleep_quality(coordinator, quality, date):
             raise Exception(f"Failed to log sleep quality: {resp.status} - {text}")
         
         _LOGGER.info("Successfully logged sleep quality for %s", date_str)
-        return True                                
+        return True
