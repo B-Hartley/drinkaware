@@ -79,16 +79,22 @@ async def test_button_press(hass, setup_integration):
     # Set the hass attribute directly
     button.hass = hass
     
-    # Just patch the hass.services.async_call method since that's what's failing
-    with patch.object(hass.services, "async_call") as mock_service_call:
-        # Patch coordinator's async_refresh too so it doesn't actually try to refresh
-        coordinator.async_refresh = AsyncMock()
-        
-        # Call the button's async_press method directly
+    # Replace the _async_press_action method with a mock
+    original_method = button._async_press_action
+    button._async_press_action = AsyncMock()
+    
+    try:
+        # Call the button's async_press method
         await button.async_press()
         
-        # Verify coordinator.async_refresh was called
-        coordinator.async_refresh.assert_called_once()
+        # Verify _async_press_action was called
+        button._async_press_action.assert_called_once()
+        
+        # Verify that the coordinator's async_refresh was called
+        assert coordinator.async_refresh.called
+    finally:
+        # Restore the original method
+        button._async_press_action = original_method
 
 
 def test_button_entity_creation():
