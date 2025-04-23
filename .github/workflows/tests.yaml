@@ -26,8 +26,16 @@ jobs:
         run: |
           # Create the destination directory
           mkdir -p custom_components/drinkaware
-          # Copy your integration files to the expected location
-          cp -r *.py custom_components/drinkaware/
+          # Find and list all Python files
+          find . -type f -name "*.py" | grep -v "tests/"
+          # Copy all .py files to custom_components/drinkaware
+          # Recursively copy the entire directory content
+          if [ -d "./drinkaware" ]; then
+            cp -r ./drinkaware/* custom_components/drinkaware/
+          else
+            # Try with main directory
+            cp -r ./* custom_components/drinkaware/
+          fi
           # List directories to verify setup
           ls -la
           ls -la custom_components/drinkaware/
