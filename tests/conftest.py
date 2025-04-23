@@ -113,7 +113,7 @@ def mock_api_responses(mock_aiohttp_client, load_fixture):
 @pytest.fixture
 async def setup_integration(hass, mock_config_entry, mock_api_responses):
     """Set up the Drinkaware integration."""
-    # Initialize the component
+    # Create a ConfigEntry from the mock data
     from homeassistant.config_entries import ConfigEntry
     
     # Create a ConfigEntry from the mock data
@@ -131,12 +131,19 @@ async def setup_integration(hass, mock_config_entry, mock_api_responses):
     # Set up the domain in hass.data
     hass.data.setdefault(DOMAIN, {})
     
-    # Mock the coordinator creation
+    # Mock necessary components for setting up the entry
     with patch("homeassistant.helpers.aiohttp_client.async_get_clientsession"), \
-         patch("custom_components.drinkaware.DrinkAwareDataUpdateCoordinator._async_update_data"):
+         patch("custom_components.drinkaware.DrinkAwareDataUpdateCoordinator._async_update_data"), \
+         patch("homeassistant.config_entries.ConfigEntries.async_setup", return_value=True), \
+         patch("homeassistant.config_entries.ConfigEntries.async_get_entry", return_value=config_entry), \
+         patch("homeassistant.config_entries.async_forward_entry_setups", return_value=True):
         
-        # Set up the integration
-        assert await hass.config_entries.async_setup(config_entry.entry_id)
+        # Add the entry to the registry
+        hass.config_entries._entries[config_entry.entry_id] = config_entry
+        
+        # Manually run setup entry
+        from custom_components.drinkaware import async_setup_entry
+        assert await async_setup_entry(hass, config_entry)
         await hass.async_block_till_done()
     
     return hass
