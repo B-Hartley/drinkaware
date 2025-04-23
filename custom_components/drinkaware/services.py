@@ -38,7 +38,6 @@ from .drink_constants import (
     DRINK_NAMES,
 )
 
-from .utils import get_entry_id_by_account_name
 from .dynamic_services import (
     update_last_used_account,
     async_get_drink_free_day_schema,
