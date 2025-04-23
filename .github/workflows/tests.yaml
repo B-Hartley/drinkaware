@@ -24,13 +24,12 @@ jobs:
           
       - name: Set up test environment
         run: |
-          # Create proper directory structure for the integration
-          mkdir -p custom_components/drinkaware
+          # Print current directory structure for debugging
+          echo "Current directory structure:"
+          find . -type d | sort
           
-          # Copy all component files to custom_components/drinkaware
-          cp -r __init__.py config_flow.py const.py sensor.py services.py drink_constants.py dynamic_services.py button.py custom_components/drinkaware/
-          
-          # Add the integration directory to PYTHONPATH
+          # No need to copy files as they're already in the correct location
+          # Just add the repository root to PYTHONPATH
           echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
           
       - name: Lint with flake8
@@ -41,6 +40,9 @@ jobs:
           
       - name: Run tests
         run: |
+          # Install the component in development mode
+          pip install -e .
+          
           # Display directory structure for debugging
           echo "Custom components directory structure:"
           find custom_components -type f | sort
