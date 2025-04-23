@@ -133,8 +133,11 @@ async def setup_integration(hass, mock_config_entry, mock_api_responses):
     
     with patch("homeassistant.helpers.aiohttp_client.async_get_clientsession"), \
          patch("homeassistant.config_entries.ConfigEntries.async_setup", return_value=True), \
-         patch("homeassistant.config_entries.ConfigEntries.async_get_entry", return_value=config_entry), \
-         patch("homeassistant.config_entries.async_forward_entry_setups", return_value=True):
+         patch("homeassistant.config_entries.ConfigEntries.async_get_entry", return_value=config_entry):
+        
+        # Manually set up each platform instead of using async_forward_entry_setups
+        for platform in ["sensor", "button"]:
+            await hass.config_entries.async_forward_entry_setup(config_entry, platform)
         
         # Add the entry to the registry
         hass.config_entries._entries[config_entry.entry_id] = config_entry
