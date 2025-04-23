@@ -155,13 +155,13 @@ def _create_log_drink_free_day_handler(hass: HomeAssistant):
 
             # Log the drink-free day
             await _mark_day_as_drink_free(coordinator, date_str)
-            
+
             # Final refresh to update the sensors with new data
             await coordinator.async_refresh()
         except Exception as err:
             _LOGGER.error(f"Error logging drink-free day: {err}")
             raise HomeAssistantError(f"Error logging drink-free day: {err}")
-    
+
     return async_log_drink_free_day
 
 
@@ -178,7 +178,7 @@ async def _check_for_existing_drinks(coordinator, date):
                 drink_count = day_data.get("drinks", 0)
                 _LOGGER.info(f"Found {drink_count} drinks for {date_str}")
                 break
-                
+
     return has_drinks, date_str
 
 
@@ -246,7 +246,7 @@ async def _remove_single_drink(coordinator, drink, date_str):
                 "Authorization": f"Bearer {coordinator.access_token}",
                 "Accept": "application/json",
             }
-            
+
             async with coordinator.session.delete(delete_url, headers=headers) as del_resp:
                 if del_resp.status not in (200, 204):
                     text = await del_resp.text()
@@ -308,13 +308,13 @@ def _create_log_drink_handler(hass: HomeAssistant):
 
         # Get drink parameters
         drink_params = _get_drink_parameters(service_call, drink_type_selector)
-        
+
         coordinator = get_coordinator_by_entry_id(hass, entry_id)
         if not coordinator:
             raise HomeAssistantError(
                 "No matching Drinkaware integration found. Please specify a valid config entry ID."
             )
-            
+
         try:
             # Handle auto-removal of drink-free day flag if needed
             if drink_params["auto_remove_dfd"]:
@@ -333,7 +333,7 @@ def _create_log_drink_handler(hass: HomeAssistant):
         except Exception as err:
             _LOGGER.error(f"Error logging drink: {err}")
             raise HomeAssistantError(f"Error logging drink: {err}")
-    
+
     return async_log_drink
 
 
@@ -381,15 +381,15 @@ async def _add_or_set_drink(coordinator, params):
 
     # Decide if we need to create a custom drink with custom ABV
     create_custom = _should_create_custom_drink(params["drink_type"], params["abv"])
-    
+
     if should_increment:
         # Use POST with quantityAdjustment to add a drink
         await add_drink(
-            coordinator, 
-            params["drink_type"], 
-            params["drink_measure"], 
-            params["abv"] if create_custom else None, 
-            params["date"], 
+            coordinator,
+            params["drink_type"],
+            params["drink_measure"],
+            params["abv"] if create_custom else None,
+            params["date"],
             params["custom_name"]
         )
         _LOGGER.info("Added 1 drink using quantityAdjustment")
@@ -397,23 +397,23 @@ async def _add_or_set_drink(coordinator, params):
         # If quantity > 1, add additional drinks
         for _ in range(1, params["quantity"]):
             await add_drink(
-                coordinator, 
-                params["drink_type"], 
-                params["drink_measure"], 
-                params["abv"] if create_custom else None, 
-                params["date"], 
+                coordinator,
+                params["drink_type"],
+                params["drink_measure"],
+                params["abv"] if create_custom else None,
+                params["date"],
                 params["custom_name"]
             )
             _LOGGER.info("Added additional drink")
     else:
         # Use PUT with quantity to set an absolute value
         await set_drink_quantity(
-            coordinator, 
-            params["drink_type"], 
-            params["drink_measure"], 
-            params["abv"] if create_custom else None, 
-            params["quantity"], 
-            params["date"], 
+            coordinator,
+            params["drink_type"],
+            params["drink_measure"],
+            params["abv"] if create_custom else None,
+            params["quantity"],
+            params["date"],
             params["custom_name"]
         )
         _LOGGER.info(f"Set drink quantity to {params['quantity']}")
@@ -440,7 +440,7 @@ async def _should_increment_drink(coordinator, drink_type, drink_measure, date):
                         drink.get("measureId") == drink_measure):
                     # Already exists, so we should increment
                     return True
-    
+
     return False
 
 
@@ -448,13 +448,13 @@ def _should_create_custom_drink(drink_type, abv):
     """Determine if we need to create a custom drink with custom ABV."""
     if abv is None:
         return False
-        
+
     # Only create a custom drink if the ABV differs from the default
     default_abv = DEFAULT_ABV_VALUES.get(drink_type)
     if default_abv is not None and abs(default_abv - abv) > 0.01:
         _LOGGER.info(f"Creating custom drink: custom ABV {abv}% differs from default {default_abv}%")
         return True
-    
+
     _LOGGER.info(f"Using standard drink: custom ABV {abv}% is the same as default {default_abv}%")
     return False  # Don't create custom drink if ABV matches default
 
@@ -497,7 +497,7 @@ def _create_delete_drink_handler(hass: HomeAssistant):
             # First check if this drink exists and get its current quantity
             date_str = date.strftime("%Y-%m-%d")
             drink_info = await _get_drink_info(coordinator, date_str, drink_type, drink_measure)
-            
+
             if not drink_info or drink_info["quantity"] == 0:
                 _LOGGER.warning(f"No drink of type {drink_type} found for {date_str}")
                 raise HomeAssistantError(f"No matching drink found for {date_str}")
@@ -510,7 +510,7 @@ def _create_delete_drink_handler(hass: HomeAssistant):
         except Exception as err:
             _LOGGER.error(f"Error deleting drink: {err}")
             raise HomeAssistantError(f"Error deleting drink: {err}")
-    
+
     return async_delete_drink
 
 
@@ -525,7 +525,7 @@ async def _get_drink_info(coordinator, date_str, drink_type, drink_measure):
 
     current_quantity = 0
     drink_name = "Unknown Drink"
-    
+
     async with coordinator.session.get(url, headers=headers) as resp:
         if resp.status == 200:
             activity = await resp.json()
@@ -540,14 +540,14 @@ async def _get_drink_info(coordinator, date_str, drink_type, drink_measure):
                         "quantity": current_quantity,
                         "name": drink_name
                     }
-    
+
     return None
 
 
 async def _delete_drink(coordinator, date_str, drink_type, drink_measure, drink_info):
     """Delete a drink from a specific day."""
     delete_url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}/{drink_type}/{drink_measure}"
-    
+
     headers = {
         "Authorization": f"Bearer {coordinator.access_token}",
         "Accept": "application/json",
@@ -582,7 +582,7 @@ def _create_remove_drink_free_day_handler(hass: HomeAssistant):
         except Exception as err:
             _LOGGER.error("Error removing drink-free day: %s", err)
             raise HomeAssistantError(f"Error removing drink-free day: {err}")
-    
+
     return async_remove_drink_free_day
 
 
@@ -607,7 +607,7 @@ def _create_log_sleep_quality_handler(hass: HomeAssistant):
         except Exception as err:
             _LOGGER.error("Error logging sleep quality: %s", err)
             raise HomeAssistantError(f"Error logging sleep quality: {err}")
-    
+
     return async_log_sleep_quality
 
 
@@ -635,7 +635,7 @@ def _create_refresh_handler(hass: HomeAssistant):
         except Exception as err:
             _LOGGER.error("Error refreshing Drinkaware data: %s", err)
             raise HomeAssistantError(f"Error refreshing Drinkaware data: {err}")
-    
+
     return async_refresh
 
 
@@ -682,16 +682,16 @@ async def create_custom_drink(coordinator, drink_type, title, abv):
     try:
         # Make the API request
         result = await _make_custom_drink_request(coordinator, url, headers, payload)
-        
+
         # Process and store measure descriptions
         _process_measure_descriptions(coordinator, result)
-        
+
         # Update the drinks cache
         _update_custom_drinks_cache(coordinator, result)
-        
+
         _LOGGER.debug(f"Updated drinks cache with custom drink: {title} ({abv}% ABV)")
         return result.get("drinkId")
-        
+
     except Exception as err:
         _LOGGER.error(f"Exception creating custom drink: {str(err)}")
         raise
@@ -771,7 +771,7 @@ async def add_drink(coordinator, drink_type, drink_measure, abv, date, custom_na
 
     # Prepare and send the request
     url, headers, payload = _prepare_add_drink_request(coordinator, date_str, drink_type, drink_measure)
-    
+
     return await _send_add_drink_request(coordinator, url, headers, payload, date_str)
 
 
@@ -779,7 +779,7 @@ async def _create_custom_drink_with_abv(coordinator, drink_type, abv, custom_nam
     """Create a custom drink with the specified ABV."""
     # Get original drink info to get the title
     title = custom_name if custom_name else "Custom Drink"
-    
+
     if not custom_name and hasattr(coordinator, 'drinks_cache') and coordinator.drinks_cache:
         title = _find_original_drink_title(coordinator, drink_type, title)
 
@@ -796,13 +796,13 @@ def _find_original_drink_title(coordinator, drink_type, default_title):
             for drink in category.get("drinks", []):
                 if drink.get("drinkId") == drink_type:
                     return drink.get("title", default_title)
-                    
+
     # Also check customDrinks if present
     if "customDrinks" in coordinator.drinks_cache:
         for drink in coordinator.drinks_cache.get("customDrinks", []):
             if drink.get("drinkId") == drink_type:
                 return drink.get("title", default_title)
-                
+
     return default_title
 
 
@@ -822,7 +822,7 @@ def _prepare_add_drink_request(coordinator, date_str, drink_type, drink_measure)
         "measureId": drink_measure,
         "quantityAdjustment": 1  # Add one drink
     }
-    
+
     return url, headers, payload
 
 
@@ -854,7 +854,7 @@ async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quanti
 
     # Prepare and send the request
     url, headers, payload = _prepare_set_quantity_request(coordinator, date_str, drink_type, drink_measure, quantity)
-    
+
     return await _send_set_quantity_request(coordinator, url, headers, payload, date_str)
 
 
@@ -874,7 +874,7 @@ def _prepare_set_quantity_request(coordinator, date_str, drink_type, drink_measu
         "measureId": drink_measure,
         "quantity": quantity  # Set absolute quantity
     }
-    
+
     return url, headers, payload
 
 

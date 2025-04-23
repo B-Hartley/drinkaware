@@ -52,13 +52,13 @@ def async_get_available_drinks(hass: HomeAssistant):
         if hasattr(coordinator, 'drinks_cache') and coordinator.drinks_cache:
             # Process standard drinks from categories
             _process_standard_drinks(coordinator, drinks_data)
-            
+
             # Process custom drinks from different sources
             _process_custom_drinks(coordinator, custom_drinks)
 
     # Compile drink options from standard drinks
     drink_options = _compile_standard_drink_options(drinks_data)
-    
+
     # Add custom drinks to options
     drink_options.extend(_compile_custom_drink_options(custom_drinks))
 
@@ -104,7 +104,7 @@ def _extract_custom_drinks(drinks_array, custom_drinks, account_name):
 def _compile_standard_drink_options(drinks_data):
     """Compile standard drink options from drinks data."""
     drink_options = []
-    
+
     # Add standard drinks first
     for drink_id, drink in sorted(drinks_data.items(), key=lambda x: x[1].get("title", "")):
         abv = drink.get("abv", 0)
@@ -113,14 +113,14 @@ def _compile_standard_drink_options(drinks_data):
             "value": drink_id,
             "label": f"{title} ({abv}% ABV)"
         })
-        
+
     return drink_options
 
 
 def _compile_custom_drink_options(custom_drinks):
     """Compile custom drink options from custom drinks list."""
     drink_options = []
-    
+
     # Add custom drinks
     for drink in sorted(custom_drinks, key=lambda x: x.get("title", "")):
         drink_id = drink.get("drinkId")
@@ -133,7 +133,7 @@ def _compile_custom_drink_options(custom_drinks):
                 "value": drink_id,
                 "label": f"{title} ({abv}% ABV) - Custom [{account_name}]"
             })
-            
+
     return drink_options
 
 
