@@ -5,12 +5,11 @@ import logging
 import voluptuous as vol
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
-from homeassistant.const import ATTR_DATE, CONF_NAME
+from homeassistant.const import ATTR_DATE
 
 from .const import (
     DOMAIN,
     ATTR_ENTRY_ID,
-    ATTR_ACCOUNT_NAME,
     ATTR_DRINK_TYPE,
     ATTR_DRINK_MEASURE,
     ATTR_DRINK_ABV,
@@ -19,13 +18,13 @@ from .const import (
 )
 
 from .drink_constants import (
-    DEFAULT_ABV_VALUES,
     DRINK_MEASURE_COMPATIBILITY,
     MEASURE_DESCRIPTIONS,
     DRINK_NAMES,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
 
 @callback
 def async_get_first_config_entry(hass: HomeAssistant) -> str:
@@ -37,6 +36,7 @@ def async_get_first_config_entry(hass: HomeAssistant) -> str:
     if entries:
         return entries[0]
     return ""
+
 
 @callback
 def async_get_available_drinks(hass: HomeAssistant):
@@ -112,6 +112,7 @@ def async_get_available_drinks(hass: HomeAssistant):
 
     return drink_options
 
+
 @callback
 def async_get_compatible_measures(hass: HomeAssistant, drink_id):
     """Get compatible measures for a specific drink."""
@@ -138,6 +139,7 @@ def async_get_compatible_measures(hass: HomeAssistant, drink_id):
 
     return measure_options
 
+
 @callback
 def async_get_drink_free_day_schema(hass: HomeAssistant):
     """Get schema for drink free day service."""
@@ -150,6 +152,7 @@ def async_get_drink_free_day_schema(hass: HomeAssistant):
     }
     return schema_dict
 
+
 @callback
 def async_get_remove_drink_free_day_schema(hass: HomeAssistant):
     """Get schema for remove drink free day service."""
@@ -160,6 +163,7 @@ def async_get_remove_drink_free_day_schema(hass: HomeAssistant):
         vol.Optional(ATTR_DATE): cv.date,
     }
     return schema_dict
+
 
 @callback
 def async_get_log_sleep_quality_schema(hass: HomeAssistant):
@@ -173,6 +177,7 @@ def async_get_log_sleep_quality_schema(hass: HomeAssistant):
     }
     return schema_dict
 
+
 @callback
 def async_get_refresh_schema(hass: HomeAssistant):
     """Get schema for refresh service."""
@@ -182,6 +187,7 @@ def async_get_refresh_schema(hass: HomeAssistant):
         vol.Optional(ATTR_ENTRY_ID, default=first_entry): cv.string,
     }
     return schema_dict
+
 
 @callback
 def async_get_log_drink_schema(hass: HomeAssistant):
@@ -228,6 +234,7 @@ def async_get_log_drink_schema(hass: HomeAssistant):
     # Return the schema with validation
     return vol.Schema(vol.All(schema_dict, validate_drink_id_inputs, validate_drink_measure_compatibility))
 
+
 @callback
 def async_get_delete_drink_schema(hass: HomeAssistant):
     """Get schema for delete drink service."""
@@ -269,6 +276,7 @@ def async_get_delete_drink_schema(hass: HomeAssistant):
     # Return the schema with validation
     return vol.Schema(vol.All(schema_dict, validate_drink_id_inputs, validate_drink_measure_compatibility))
 
+
 def validate_drink_measure_compatibility(value):
     """Validate that the drink and measure types are compatible."""
     # Determine which drink ID to use
@@ -309,7 +317,9 @@ def validate_drink_measure_compatibility(value):
                 compatible_measures.append(m_id)
 
         # Format the error message
-        error_msg = f"Incompatible drink and measure combination: {drink_name} cannot be served in {measure_description}. "
+        error_msg = (
+            f"Incompatible drink and measure combination: {drink_name} cannot be served in {measure_description}. "
+        )
         if compatible_measures:
             error_msg += f"Compatible measures for {drink_name} are: {', '.join(compatible_measures)}"
 

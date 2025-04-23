@@ -2,18 +2,16 @@
 Config flow for Drinkaware integration.
 """
 import logging
-from typing import Any, Dict, Optional
 import urllib.parse
 import secrets
 import hashlib
 import base64
 import aiohttp
-import voluptuous as vol
 import re
+import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.network import get_url
 
 from .const import (
     DOMAIN,
@@ -25,13 +23,18 @@ _LOGGER = logging.getLogger(__name__)
 
 # OAuth endpoints from the URL
 OAUTH_CLIENT_ID = "fe14e7b9-d4e1-4967-8fce-617c6f48a055"
-OAUTH_AUTHORIZATION_URL = "https://login.drinkaware.co.uk/login.drinkaware.co.uk/B2C_1A_JITMigraion_signup_signin/oauth2/v2.0/authorize"
-OAUTH_TOKEN_URL = "https://login.drinkaware.co.uk/login.drinkaware.co.uk/B2C_1A_JITMigraion_signup_signin/oauth2/v2.0/token"
+OAUTH_AUTHORIZATION_URL = (
+    "https://login.drinkaware.co.uk/login.drinkaware.co.uk/B2C_1A_JITMigraion_signup_signin/oauth2/v2.0/authorize"
+)
+OAUTH_TOKEN_URL = (
+    "https://login.drinkaware.co.uk/login.drinkaware.co.uk/B2C_1A_JITMigraion_signup_signin/oauth2/v2.0/token"
+)
 OAUTH_SCOPES = [
     "https://drinkawareproduction.onmicrosoft.com/712d0439-75b8-4dc7-a474-975bf5eced84/tracking.user.read",
     "https://drinkawareproduction.onmicrosoft.com/712d0439-75b8-4dc7-a474-975bf5eced84/tracking.user.write",
     "openid", "profile", "offline_access"
 ]
+
 
 class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Drinkaware."""
@@ -239,8 +242,10 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             async with self._session.get(url, headers=headers) as resp:
                 if resp.status != 200:
-                    _LOGGER.error("API connection test failed with status %s: %s",
-                                 resp.status, await resp.text())
+                    _LOGGER.error(
+                        "API connection test failed with status %s: %s",
+                        resp.status, await resp.text()
+                    )
                 return resp.status == 200
         except aiohttp.ClientError as err:
             _LOGGER.error("Error testing API connection: %s", err)

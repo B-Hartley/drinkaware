@@ -2,7 +2,6 @@
 Button platform for Drinkaware integration.
 """
 import logging
-from datetime import datetime
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
@@ -14,6 +13,7 @@ from . import DrinkAwareDataUpdateCoordinator
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,

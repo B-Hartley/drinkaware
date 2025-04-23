@@ -7,8 +7,12 @@ DOMAIN = "drinkaware"
 # OAuth Configuration
 OAUTH_CLIENT_ID = "fe14e7b9-d4e1-4967-8fce-617c6f48a055"
 # Use the exact URLs from the CURL commands
-OAUTH_AUTHORIZATION_URL = "https://login.drinkaware.co.uk/login.drinkaware.co.uk/B2C_1A_JITMigraion_signup_signin/oauth2/v2.0/authorize"
-OAUTH_TOKEN_URL = "https://login.drinkaware.co.uk/login.drinkaware.co.uk/B2C_1A_JITMigraion_signup_signin/oauth2/v2.0/token"
+OAUTH_AUTHORIZATION_URL = (
+    "https://login.drinkaware.co.uk/login.drinkaware.co.uk/B2C_1A_JITMigraion_signup_signin/oauth2/v2.0/authorize"
+)
+OAUTH_TOKEN_URL = (
+    "https://login.drinkaware.co.uk/login.drinkaware.co.uk/B2C_1A_JITMigraion_signup_signin/oauth2/v2.0/token"
+)
 
 # API URLs
 API_BASE_URL = "https://api.drinkaware.co.uk"

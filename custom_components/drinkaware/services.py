@@ -2,21 +2,17 @@
 Services for Drinkaware integration.
 """
 import logging
-import voluptuous as vol
-from datetime import datetime, timedelta
-import aiohttp
 import asyncio
+from datetime import datetime
+import voluptuous as vol
 
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv
-from homeassistant.const import CONF_ENTITY_ID, ATTR_DATE, CONF_NAME
+from homeassistant.core import HomeAssistant
+from homeassistant.const import ATTR_DATE
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import (
     DOMAIN,
     API_BASE_URL,
-    ENDPOINT_DAY,
-    ENDPOINT_DRINKS,
     SERVICE_LOG_DRINK_FREE_DAY,
     SERVICE_LOG_DRINK,
     SERVICE_DELETE_DRINK,
@@ -29,13 +25,11 @@ from .const import (
     ATTR_DRINK_QUANTITY,
     ATTR_ENTRY_ID,
     ATTR_SLEEP_QUALITY,
-    ATTR_ACCOUNT_NAME,
 )
 
 from .drink_constants import (
     DEFAULT_ABV_VALUES,
     MEASURE_DESCRIPTIONS,
-    DRINK_NAMES,
 )
 
 from .dynamic_services import (
@@ -45,10 +39,10 @@ from .dynamic_services import (
     async_get_remove_drink_free_day_schema,
     async_get_log_sleep_quality_schema,
     async_get_refresh_schema,
-    validate_drink_measure_compatibility,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
 
 def validate_entry_id(value):
     """Validate that entry_id is provided."""
@@ -56,10 +50,11 @@ def validate_entry_id(value):
         raise vol.Invalid("Config Entry ID must be provided")
 
     # Remove account_name if it was provided (for backward compatibility)
-    if ATTR_ACCOUNT_NAME in value:
-        value.pop(ATTR_ACCOUNT_NAME)
+    if "account_name" in value:
+        value.pop("account_name")
 
     return value
+
 
 def get_coordinator_by_entry_id(hass, entry_id):
     """Get coordinator by entry_id."""
@@ -78,6 +73,7 @@ def get_coordinator_by_entry_id(hass, entry_id):
             return coordinator
 
     return None
+
 
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Set up services for Drinkaware integration."""
@@ -114,7 +110,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
             # If we have drinks and should remove them
             if has_drinks and remove_drinks:
-                _LOGGER.info(f"Attempting to remove all drinks for {date_str} before marking as drink-free")
+                _LOGGER.info(
+                    f"Attempting to remove all drinks for {date_str} before marking as drink-free"
+                )
 
                 # Get detailed information about what drinks are logged for the day
                 url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
@@ -153,11 +151,15 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                             _LOGGER.info(f"Removing {drink_name} from {date_str}")
                             try:
                                 # Use DELETE to completely remove the drink
-                                delete_url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}/{drink_id}/{measure_id}"
+                                delete_url = (
+                                    f"{API_BASE_URL}/tracking/v1/activity/{date_str}/{drink_id}/{measure_id}"
+                                )
                                 async with coordinator.session.delete(delete_url, headers=headers) as del_resp:
                                     if del_resp.status not in (200, 204):
                                         text = await del_resp.text()
-                                        _LOGGER.warning(f"Error removing drink {drink_name}: {del_resp.status} - {text}")
+                                        _LOGGER.warning(
+                                            f"Error removing drink {drink_name}: {del_resp.status} - {text}"
+                                        )
                                     else:
                                         _LOGGER.info(f"Successfully removed {drink_name}")
 
@@ -198,7 +200,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 if resp.status not in (200, 204):
                     text = await resp.text()
                     _LOGGER.error(f"Error logging drink-free day: {resp.status} - {text}")
-                    raise HomeAssistantError(f"Failed to log drink-free day: {resp.status} - {text}")
+                    raise HomeAssistantError(
+                        f"Failed to log drink-free day: {resp.status} - {text}"
+                    )
 
                 _LOGGER.info(f"Successfully marked {date_str} as drink-free")
 
@@ -286,7 +290,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                         # Check if this drink type and measure already exists
                         for drink in drinks:
                             if (drink.get("drinkId") == drink_type and
-                                drink.get("measureId") == drink_measure):
+                                    drink.get("measureId") == drink_measure):
                                 # Already exists, so we should increment
                                 should_increment = True
                                 break
@@ -301,23 +305,33 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 default_abv = DEFAULT_ABV_VALUES.get(drink_type)
                 if default_abv is not None and abs(default_abv - abv) > 0.01:
                     create_custom = True
-                    _LOGGER.info(f"Creating custom drink: custom ABV {abv}% differs from default {default_abv}%")
+                    _LOGGER.info(
+                        f"Creating custom drink: custom ABV {abv}% differs from default {default_abv}%"
+                    )
                 else:
-                    _LOGGER.info(f"Using standard drink: custom ABV {abv}% is the same as default {default_abv}%")
+                    _LOGGER.info(
+                        f"Using standard drink: custom ABV {abv}% is the same as default {default_abv}%"
+                    )
                     abv = None  # Don't create custom drink if ABV matches default
 
             if should_increment:
                 # Use POST with quantityAdjustment to add a drink
-                await add_drink(coordinator, drink_type, drink_measure, abv if create_custom else None, date, custom_name)
+                await add_drink(
+                    coordinator, drink_type, drink_measure, abv if create_custom else None, date, custom_name
+                )
                 _LOGGER.info("Added 1 drink using quantityAdjustment")
 
                 # If quantity > 1, add additional drinks
                 for _ in range(1, quantity):
-                    await add_drink(coordinator, drink_type, drink_measure, abv if create_custom else None, date, custom_name)
+                    await add_drink(
+                        coordinator, drink_type, drink_measure, abv if create_custom else None, date, custom_name
+                    )
                     _LOGGER.info("Added additional drink")
             else:
                 # Use PUT with quantity to set an absolute value
-                await set_drink_quantity(coordinator, drink_type, drink_measure, abv if create_custom else None, quantity, date, custom_name)
+                await set_drink_quantity(
+                    coordinator, drink_type, drink_measure, abv if create_custom else None, quantity, date, custom_name
+                )
                 _LOGGER.info(f"Set drink quantity to {quantity}")
 
             # Trigger refresh to update the sensors with new data
@@ -383,7 +397,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
                     for drink in drinks:
                         if (drink.get("drinkId") == drink_type and
-                            drink.get("measureId") == drink_measure):
+                                drink.get("measureId") == drink_measure):
                             current_quantity = drink.get("quantity", 0)
                             drink_name = drink.get("name", "Unknown Drink")
                             break
@@ -553,6 +567,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         schema=refresh_schema,
     )
 
+
 async def async_unload_services(hass: HomeAssistant) -> None:
     """Unload Drinkaware services."""
     hass.services.async_remove(DOMAIN, SERVICE_LOG_DRINK_FREE_DAY)
@@ -561,6 +576,7 @@ async def async_unload_services(hass: HomeAssistant) -> None:
     hass.services.async_remove(DOMAIN, SERVICE_REMOVE_DRINK_FREE_DAY)
     hass.services.async_remove(DOMAIN, SERVICE_LOG_SLEEP_QUALITY)
     hass.services.async_remove(DOMAIN, SERVICE_REFRESH)
+
 
 async def create_custom_drink(coordinator, drink_type, title, abv):
     """Create a custom drink with a specific ABV."""
@@ -602,7 +618,10 @@ async def create_custom_drink(coordinator, drink_type, title, abv):
                     # Otherwise use our pre-defined descriptions
                     elif measure_id and measure_id in MEASURE_DESCRIPTIONS:
                         # We could log this for debugging
-                        _LOGGER.debug(f"Using predefined description for measure {measure_id}: {MEASURE_DESCRIPTIONS[measure_id]}")
+                        _LOGGER.debug(
+                            f"Using predefined description for measure {measure_id}: "
+                            f"{MEASURE_DESCRIPTIONS[measure_id]}"
+                        )
             except Exception as err:
                 _LOGGER.debug(f"Error processing measure descriptions: {err}")
 
@@ -632,6 +651,7 @@ async def create_custom_drink(coordinator, drink_type, title, abv):
     except Exception as err:
         _LOGGER.error(f"Exception creating custom drink: {str(err)}")
         raise
+
 
 async def add_drink(coordinator, drink_type, drink_measure, abv, date, custom_name=None):
     """Add a single drink to Drinkaware using quantityAdjustment."""
@@ -663,7 +683,9 @@ async def add_drink(coordinator, drink_type, drink_measure, abv, date, custom_na
             # Use the custom drink ID instead of the original
             drink_type = custom_drink_id
         except Exception as err:
-            _LOGGER.warning(f"Failed to create custom drink with ABV {abv}, using standard drink: {str(err)}")
+            _LOGGER.warning(
+                f"Failed to create custom drink with ABV {abv}, using standard drink: {str(err)}"
+            )
 
     url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
 
@@ -689,6 +711,7 @@ async def add_drink(coordinator, drink_type, drink_measure, abv, date, custom_na
         result = await resp.json()
         _LOGGER.info(f"Successfully added drink for {date_str} (new quantity: {result.get('quantity', 0)})")
         return True, result.get("quantity", 0)
+
 
 async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quantity, date, custom_name=None):
     """Set the absolute quantity of a drink type for a specific day."""
@@ -720,7 +743,9 @@ async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quanti
             # Use the custom drink ID instead of the original
             drink_type = custom_drink_id
         except Exception as err:
-            _LOGGER.warning(f"Failed to create custom drink with ABV {abv}, using standard drink: {str(err)}")
+            _LOGGER.warning(
+                f"Failed to create custom drink with ABV {abv}, using standard drink: {str(err)}"
+            )
 
     url = f"{API_BASE_URL}/tracking/v1/activity/{date_str}"
 
@@ -747,6 +772,7 @@ async def set_drink_quantity(coordinator, drink_type, drink_measure, abv, quanti
         _LOGGER.info(f"Successfully set drink quantity for {date_str} to {result.get('quantity', 0)}")
         return True
 
+
 async def remove_drink_free_day(coordinator, date):
     """Remove a drink-free day marking from Drinkaware."""
     # Convert date to ISO format string
@@ -768,6 +794,7 @@ async def remove_drink_free_day(coordinator, date):
 
         _LOGGER.info("Successfully removed drink-free day for %s", date_str)
         return True
+
 
 async def log_sleep_quality(coordinator, quality, date):
     """Log sleep quality to Drinkaware."""
