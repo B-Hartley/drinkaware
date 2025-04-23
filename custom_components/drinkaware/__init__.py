@@ -34,7 +34,7 @@ from .services import async_setup_services, async_unload_services
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor"]
+PLATFORMS = ["sensor","button"]
     
 async def async_setup(hass: HomeAssistant, config):
     """Set up the Drinkaware component."""

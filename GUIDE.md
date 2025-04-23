@@ -96,6 +96,53 @@ Most sensors include additional data in their attributes. Here are some examples
   - Available standard drinks and custom drinks (useful for service calls)
   - **`custom_drinks_reference`**: User-friendly list of custom drinks with their IDs
 
+# Button Entities
+
+The integration provides button entities to simplify common tasks:
+
+## Log Drink Free Day Button (`button.drinkaware_[account_name]_log_drink_free_day`)
+
+This button makes it easy to mark today as a drink-free day with a single click:
+
+- When pressed, it will automatically remove any existing drinks for today and then mark the day as drink-free
+- After logging the drink-free day, it automatically refreshes all sensors to show the updated data
+- The button is displayed with a clear icon (`mdi:glass-cocktail-off`) for easy identification
+
+### Using the Button
+
+1. Add the button entity to your dashboard for easy access
+2. Simply press the button to mark today as a drink-free day
+3. The action is the equivalent of calling the `log_drink_free_day` service with `remove_drinks: true`
+
+### Adding to Dashboard
+
+You can add the button to your dashboard just like any other button entity:
+
+1. Edit your dashboard
+2. Click "Add Card"
+3. Choose "Button" or "Entities" card
+4. Select the `button.drinkaware_[account_name]_log_drink_free_day` entity
+5. Configure the card appearance as desired
+
+This is particularly useful for quickly logging drink-free days without having to manually call the service from the Developer Tools.
+
+### Example Dashboard Configuration
+
+Here's an example of how to create a dedicated Drinkaware card in your dashboard:
+
+```yaml
+type: entities
+title: Drinkaware Tracking
+entities:
+  - entity: sensor.drinkaware_john_weekly_units
+  - entity: sensor.drinkaware_john_drink_free_days
+  - entity: sensor.drinkaware_john_drink_free_streak
+  - entity: sensor.drinkaware_john_drinks_today
+  - entity: button.drinkaware_john_log_drink_free_day
+    name: "Mark Today Drink-Free"
+show_header_toggle: false
+```
+
 ## Services
 
 The Drinkaware integration provides the following services:

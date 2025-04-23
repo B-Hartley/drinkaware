@@ -10,6 +10,7 @@ This integration allows you to monitor your Drinkaware app data in Home Assistan
 - **Statistics**: Track days monitored, goals achieved, and your last recorded drink
 - **Custom Drinks**: Support for custom drink IDs from the Drinkaware app
 - **Service Controls**: Log and delete drinks, mark drink-free days, and record sleep quality
+- **One-Click Actions**: Button entity for quick logging of drink-free days
 
 ## Setup
 
@@ -17,8 +18,9 @@ This integration allows you to monitor your Drinkaware app data in Home Assistan
 2. Authenticate with your Drinkaware account using OAuth
 3. Complete the setup process by following the on-screen instructions
 
-## Available Sensors
+## Available Entities
 
+### Sensors
 The integration provides several sensors including:
 - Risk Level
 - Self Assessment Score
@@ -30,6 +32,9 @@ The integration provides several sensors including:
 - Weekly Units
 - Last Drink Date
 - Drinks Today (with detailed information in attributes)
+
+### Buttons
+- **Log Drink Free Day**: One-click button to mark today as a drink-free day (automatically removes any existing drinks)
 
 ## Using Custom Drink IDs
 

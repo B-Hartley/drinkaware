@@ -12,6 +12,7 @@ I have developed this for personal use and it is not affiliated with or authoriz
 - View your self-assessment scores
 - See detailed list of drinks consumed today
 - Log new drinks and drink-free days via services
+- One-click button to log a drink-free day
 - Support for custom drink IDs
 - Remove logged drinks when needed
 
@@ -55,7 +56,9 @@ This integration uses OAuth to authenticate with Drinkaware:
 
 **Note:** In the Network tab, look for a request with "callback" in the name. The URL should start with `uk.co.drinkaware.drinkaware://oauth/callback` and contain a code parameter.
 
-## Available Sensors
+## Available Entities
+
+### Sensors
 
 The integration creates several sensors:
 
@@ -71,6 +74,12 @@ The integration creates several sensors:
 | Weekly Units | Total units consumed in the past week |
 | Last Drink Date | Date of your most recent recorded drink |
 | Drinks Today | Number of drinks consumed today, with detailed list in attributes |
+
+### Buttons
+
+| Button | Description |
+|--------|-------------|
+| Log Drink Free Day | One-click button to mark today as a drink-free day (automatically removes any existing drinks) |
 
 ## Services
 
@@ -198,6 +207,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Version History
 
+- **0.3.0** - Added button entity for one-click logging of drink-free days
 - **0.2.4** - re-instated sensor attributes that seem to vanish on previous updates
 - **0.2.3** - Removed account_name parameter from services, making config entry ID the standard way to select an integration
 - **0.2.2** - Added support for custom drink IDs in service UI

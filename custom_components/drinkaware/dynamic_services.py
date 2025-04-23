@@ -27,15 +27,6 @@ from .drink_constants import (
 
 _LOGGER = logging.getLogger(__name__)
 
-# Store the last used account
-_LAST_USED_ACCOUNT = None
-
-@callback
-def update_last_used_account(account_name):
-    """Update the last used account name."""
-    global _LAST_USED_ACCOUNT
-    _LAST_USED_ACCOUNT = account_name
-
 @callback
 def async_get_first_config_entry(hass: HomeAssistant) -> str:
     """Get the first available config entry ID."""

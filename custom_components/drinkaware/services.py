@@ -39,7 +39,6 @@ from .drink_constants import (
 )
 
 from .dynamic_services import (
-    update_last_used_account,
     async_get_drink_free_day_schema,
     async_get_log_drink_schema,
     async_get_delete_drink_schema,
@@ -66,8 +65,6 @@ def get_coordinator_by_entry_id(hass, entry_id):
     """Get coordinator by entry_id."""
     if entry_id and entry_id in hass.data[DOMAIN]:
         coordinator = hass.data[DOMAIN][entry_id]
-        if hasattr(coordinator, 'account_name'):
-            update_last_used_account(coordinator.account_name)
         return coordinator
     
     # If we have only one entry and no specific entry_id was provided, return that
@@ -78,8 +75,6 @@ def get_coordinator_by_entry_id(hass, entry_id):
         ]
         if len(entries) == 1:
             coordinator = hass.data[DOMAIN][entries[0]]
-            if hasattr(coordinator, 'account_name'):
-                update_last_used_account(coordinator.account_name)
             return coordinator
     
     return None
@@ -800,4 +795,5 @@ async def log_sleep_quality(coordinator, quality, date):
             raise Exception(f"Failed to log sleep quality: {resp.status} - {text}")
         
         _LOGGER.info("Successfully logged sleep quality for %s", date_str)
-        return True
+        return True            
+            

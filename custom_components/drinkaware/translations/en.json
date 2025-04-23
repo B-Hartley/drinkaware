@@ -72,6 +72,11 @@
       "drinks_today": {
         "name": "Drinks Today"
       }
+    },
+    "button": {
+      "log_drink_free_day": {
+        "name": "Log Drink Free Day"
+      }
     }
   },
   "services": {

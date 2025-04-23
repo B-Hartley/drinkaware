@@ -128,5 +128,15 @@
         }
       }
     }
+  },
+  "entity": {
+    "button": {
+      "log_drink_free_day": {
+        "name": "Log Drink Free Day",
+        "state_attributes": {
+          "friendly_name": "Log Drink Free Day"
+        }
+      }
+    }
   }
 }

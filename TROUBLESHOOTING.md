@@ -436,6 +436,54 @@ Here are some common error codes you might see in the logs and what they mean:
 4. Clear your browser cache to ensure you're seeing the updated UI
 5. Restart Home Assistant after updating
 
+## Button Entity Issues
+
+### Button Not Appearing
+
+**Problem:** The Log Drink Free Day button is not appearing after updating to version 0.3.0.
+
+**Solution:**
+1. Make sure you've updated all the files correctly, including:
+   - Adding the new `button.py` file
+   - Updating `__init__.py` to include "button" in the PLATFORMS list
+   - Updating the translation files
+2. After updating the files, restart Home Assistant completely
+3. If the button still doesn't appear:
+   - Check the Home Assistant logs for any errors related to the button platform
+   - Try clearing your browser cache
+   - Try removing and re-adding the Drinkaware integration
+
+### Button Not Working
+
+**Problem:** The Log Drink Free Day button doesn't seem to do anything when pressed.
+
+**Solution:**
+1. Check the Home Assistant logs for any errors related to the button press
+2. Make sure your OAuth token is still valid:
+   - Try using another service like `drinkaware.refresh` to see if it works
+   - If authentication has expired, try reconfiguring the integration
+3. If you have multiple accounts configured, verify the button is associated with the correct account
+4. Check if the Drinkaware API is experiencing issues
+5. Enable debug logging to see more details about what happens when the button is pressed:
+   ```yaml
+   logger:
+     default: info
+     logs:
+       custom_components.drinkaware: debug
+   ```
+
+### Button Working But Not Removing Drinks
+
+**Problem:** The button logs a drink-free day but doesn't remove existing drinks.
+
+**Solution:**
+1. The button is designed to remove existing drinks automatically before logging the drink-free day
+2. If it's not working, check the logs for any errors related to removing drinks
+3. There might be an issue with the API's ability to remove certain drinks:
+   - Try manually removing the drinks first using the Drinkaware app
+   - Use the `drinkaware.delete_drink` service to remove each drink individually
+   - Then press the button to log the drink-free day
+   
 ### Integration Missing After Update
 
 **Problem:** The integration disappears after an update.
@@ -466,4 +514,4 @@ For additional support, you can:
 - Contact the developer via the repository
 - Share your problem in the Home Assistant community forums
 
-Remember that this is a community-developed integration not officially affiliated with Drinkaware, so response times may vary..
+Remember that this is a community-developed integration not officially affiliated with Drinkaware, so response times may vary.
