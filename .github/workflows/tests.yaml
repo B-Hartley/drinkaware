@@ -24,8 +24,13 @@ jobs:
           
       - name: Set up test environment
         run: |
-          mkdir -p custom_components
-          ln -s $GITHUB_WORKSPACE/custom_components/drinkaware custom_components/drinkaware
+          # Create the destination directory
+          mkdir -p custom_components/drinkaware
+          # Copy your integration files to the expected location
+          cp -r *.py custom_components/drinkaware/
+          # List directories to verify setup
+          ls -la
+          ls -la custom_components/drinkaware/
           
       - name: Lint with flake8
         run: |
