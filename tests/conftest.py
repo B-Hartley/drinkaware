@@ -113,7 +113,7 @@ def mock_api_responses(mock_aiohttp_client, load_fixture):
 @pytest.fixture
 async def setup_integration(hass, mock_config_entry, mock_api_responses):
     """Set up the Drinkaware integration."""
-    # Create a ConfigEntry from the mock data
+    # Initialize the component
     from homeassistant.config_entries import ConfigEntry
     
     # Create a ConfigEntry from the mock data
@@ -131,19 +131,47 @@ async def setup_integration(hass, mock_config_entry, mock_api_responses):
     # Set up the domain in hass.data
     hass.data.setdefault(DOMAIN, {})
     
-    # Mock necessary components for setting up the entry
+    # Mock the coordinator creation - version compatibility fix
     with patch("homeassistant.helpers.aiohttp_client.async_get_clientsession"), \
          patch("custom_components.drinkaware.DrinkAwareDataUpdateCoordinator._async_update_data"), \
          patch("homeassistant.config_entries.ConfigEntries.async_setup", return_value=True), \
          patch("homeassistant.config_entries.ConfigEntries.async_get_entry", return_value=config_entry), \
-         patch("homeassistant.config_entries.async_forward_entry_setups", return_value=True):
+         patch("custom_components.drinkaware.__init__.async_forward_entry_setups", return_value=True):
         
         # Add the entry to the registry
         hass.config_entries._entries[config_entry.entry_id] = config_entry
         
-        # Manually run setup entry
-        from custom_components.drinkaware import async_setup_entry
-        assert await async_setup_entry(hass, config_entry)
+        # Create mock coordinator
+        from custom_components.drinkaware import DrinkAwareDataUpdateCoordinator
+        token_data = config_entry.data["token"]
+        
+        # Create the coordinator
+        coordinator = DrinkAwareDataUpdateCoordinator(
+            hass,
+            mock_api_responses,
+            token_data,
+            config_entry.entry_id,
+            config_entry.data["account_name"],
+            config_entry.data["email"]
+        )
+        
+        # Mock update data
+        coordinator._async_update_data = AsyncMock(return_value={
+            "assessment": load_fixture("assessment.json")["assessments"][0],
+            "stats": load_fixture("stats.json"),
+            "goals": load_fixture("goals.json")["goals"],
+            "summary": load_fixture("summary.json")["activitySummaryDays"],
+        })
+        
+        # Manual "setup" - add coordinator to hass.data
+        hass.data[DOMAIN][config_entry.entry_id] = coordinator
+        
+        # Add fake entry for account_name_map
+        hass.data[DOMAIN]["account_name_map"] = {
+            config_entry.data["account_name"]: config_entry.entry_id
+        }
+        
+        # Wait for updates to complete
         await hass.async_block_till_done()
-    
+        
     return hass
