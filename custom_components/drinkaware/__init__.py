@@ -31,7 +31,6 @@ from .const import (
     ENDPOINT_DRINKS_GENERIC,
 )
 from .services import async_setup_services, async_unload_services
-from .utils import get_entry_id_by_account_name
 
 _LOGGER = logging.getLogger(__name__)
 
