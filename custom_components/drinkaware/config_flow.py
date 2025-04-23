@@ -38,7 +38,7 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
-    
+
     def __init__(self):
         """Initialize the config flow."""
         self._session = None
@@ -50,13 +50,13 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """Handle a flow initiated by the user."""
         errors = {}
-        
+
         if user_input is not None:
             # User has provided an account name
             self._account_name = user_input.get("account_name")
             # Continue to the auth method selection step
             return await self.async_step_auth_method()
-                
+
         # Ask for account name first
         return self.async_show_form(
             step_id="user",
@@ -72,18 +72,18 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_auth_method(self, user_input=None):
         """Handle authentication method selection."""
         errors = {}
-        
+
         if user_input is not None:
             self._session = async_get_clientsession(self.hass)
             # Generate PKCE code verifier and challenge
             self._code_verifier = secrets.token_urlsafe(64)[:128]
             code_challenge = self._generate_code_challenge(self._code_verifier)
-            
+
             # Generate authorization URL
             self._auth_url = self._get_authorization_url(code_challenge)
-            
+
             return await self.async_step_oauth_auth()
-                
+
         # Present user with choice of authentication methods
         return self.async_show_form(
             step_id="auth_method",
@@ -110,35 +110,35 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 },
             )
-        
+
         return await self.async_step_code()
 
     async def async_step_code(self, user_input=None):
         """Handle authorization code step."""
         errors = {}
-        
+
         if user_input is not None:
             redirect_url = user_input.get("redirect_url", "")
-            
+
             try:
                 # Extract the code using regex pattern matching
                 # This handles both regular URLs and custom protocol URIs
                 code = self._extract_code_from_url(redirect_url)
-                
+
                 if code:
                     # Exchange code for token using PKCE flow with the mobile app redirect URI
                     redirect_uri = "uk.co.drinkaware.drinkaware://oauth/callback"
                     token_info = await self._exchange_code_for_token(code, redirect_uri)
-                    
+
                     # Extract user info from token
                     user_info = self._parse_jwt(token_info["access_token"])
                     self._user_id = user_info.get("sub", "unknown")
                     email = user_info.get("email", "unknown")
-                    
+
                     # Check if this account is already configured
                     await self.async_set_unique_id(self._user_id)
                     self._abort_if_unique_id_configured()
-                    
+
                     # Test API connection with token
                     if await self._test_api_connection(token_info["access_token"]):
                         return self.async_create_entry(
@@ -157,7 +157,7 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except Exception as err:
                 _LOGGER.error("Error during authentication: %s", err)
                 errors["base"] = "auth_error"
-                
+
         return self.async_show_form(
             step_id="code",
             data_schema=vol.Schema({
@@ -180,12 +180,12 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Base64 encode the hash and remove padding
         code_challenge = base64.urlsafe_b64encode(code_challenge_digest).decode().rstrip('=')
         return code_challenge
-    
+
     def _get_authorization_url(self, code_challenge):
         """Get authorization URL with PKCE."""
         # Use the mobile app redirect URI
         redirect_uri = "uk.co.drinkaware.drinkaware://oauth/callback"
-        
+
         params = {
             "client_id": OAUTH_CLIENT_ID,
             "redirect_uri": redirect_uri,
@@ -195,7 +195,7 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "code_challenge": code_challenge,
             "code_challenge_method": "S256",
         }
-        
+
         query_string = urllib.parse.urlencode(params)
         return f"{OAUTH_AUTHORIZATION_URL}?{query_string}"
 
@@ -208,66 +208,66 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "redirect_uri": redirect_uri,
             "code_verifier": self._code_verifier,
         }
-        
+
         headers = {
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "User-Agent": "Home Assistant Drinkaware Integration/1.0"
         }
-        
+
         _LOGGER.debug("Exchanging code for token with data: %s", data)
-        
+
         async with self._session.post(OAUTH_TOKEN_URL, data=data, headers=headers) as response:
             if response.status != 200:
                 error_text = await response.text()
                 _LOGGER.error("Token exchange failed with status %s: %s", response.status, error_text)
                 raise Exception(f"Failed to get token: {response.status} - {error_text}")
-                
+
             token_info = await response.json()
             _LOGGER.debug("Successfully obtained token")
             return token_info
-            
+
     async def _test_api_connection(self, access_token):
         """Test connection to Drinkaware API with the token."""
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Accept": "application/json",
         }
-        
+
         url = f"{API_BASE_URL}{ENDPOINT_STATS}"
-        
+
         try:
             async with self._session.get(url, headers=headers) as resp:
                 if resp.status != 200:
-                    _LOGGER.error("API connection test failed with status %s: %s", 
+                    _LOGGER.error("API connection test failed with status %s: %s",
                                  resp.status, await resp.text())
                 return resp.status == 200
         except aiohttp.ClientError as err:
             _LOGGER.error("Error testing API connection: %s", err)
             return False
-            
+
     def _extract_code_from_url(self, text):
         """Extract authorization code from URL or redirect text using regex."""
         # Try to find code parameter in a standard URL or custom URI
         code_match = re.search(r'[?&]code=([^&]+)', text)
-        
+
         if code_match:
             return code_match.group(1)
-            
+
         # If that didn't work, try another approach - look for the complete URI pattern
         uri_match = re.search(r'uk\.co\.drinkaware\.drinkaware://oauth/callback\?.*?code=([^&]+)', text)
-        
+
         if uri_match:
             return uri_match.group(1)
-            
+
         # If still not found, try a more generic approach
         code_match = re.search(r'code[=:]\s*([A-Za-z0-9._\-]+)', text)
-        
+
         if code_match:
             return code_match.group(1)
-            
+
         return None
-        
+
     def _parse_jwt(self, token):
         """Parse JWT token to extract payload."""
         try:
@@ -275,15 +275,15 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             parts = token.split('.')
             if len(parts) != 3:
                 return {}
-                
+
             # Get the payload (middle part)
             import base64
             import json
-            
+
             # Pad the base64 string if necessary
             payload = parts[1]
             payload += '=' * ((4 - len(payload) % 4) % 4)
-            
+
             # Decode the payload
             decoded = base64.b64decode(payload)
             return json.loads(decoded)

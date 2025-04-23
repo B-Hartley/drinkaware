@@ -22,11 +22,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up Drinkaware button based on a config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    
+
     entities = [
         DrinkAwareDrinkFreeDayButton(coordinator),
     ]
-    
+
     async_add_entities(entities)
 
 
@@ -46,13 +46,13 @@ class DrinkAwareDrinkFreeDayButton(CoordinatorEntity, ButtonEntity):
             "sw_version": "1.0",
         }
         self._attr_icon = "mdi:glass-cocktail-off"
-    
+
     async def async_press(self) -> None:
         """Handle the button press - Log today as a drink-free day."""
         try:
             # Call the service with today's date
             _LOGGER.info("Button pressed: Logging drink-free day for today")
-            
+
             # Call the log_drink_free_day service with entry_id and remove_drinks=True
             await self.hass.services.async_call(
                 DOMAIN,
@@ -63,10 +63,10 @@ class DrinkAwareDrinkFreeDayButton(CoordinatorEntity, ButtonEntity):
                 },
                 blocking=True,
             )
-            
+
             # Refresh coordinator data to update all sensors
             await self.coordinator.async_refresh()
-            
+
             _LOGGER.info("Successfully logged drink-free day for today")
         except Exception as err:
             _LOGGER.error("Error logging drink-free day: %s", err)
