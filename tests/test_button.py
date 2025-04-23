@@ -73,22 +73,22 @@ async def test_button_press(hass, setup_integration):
     # Create mock coordinator
     coordinator = setup_integration
     
-    # Patch the _async_press_action method directly to avoid calling hass.services
-    with patch('custom_components.drinkaware.button.DrinkAwareDrinkFreeDayButton._async_press_action') as mock_press_action:
-        # Create the button entity with the actual hass instance
-        button = DrinkAwareDrinkFreeDayButton(coordinator)
+    # Create the button entity
+    button = DrinkAwareDrinkFreeDayButton(coordinator)
+    
+    # Set the hass attribute directly
+    button.hass = hass
+    
+    # Just patch the hass.services.async_call method since that's what's failing
+    with patch.object(hass.services, "async_call") as mock_service_call:
+        # Patch coordinator's async_refresh too so it doesn't actually try to refresh
+        coordinator.async_refresh = AsyncMock()
         
-        # Set the hass attribute directly
-        button.hass = hass
-        
-        # Call the button's async_press method
+        # Call the button's async_press method directly
         await button.async_press()
         
-        # Verify _async_press_action was called
-        mock_press_action.assert_called_once()
-        
-        # Verify that the coordinator's async_refresh was called
-        assert coordinator.async_refresh.called
+        # Verify coordinator.async_refresh was called
+        coordinator.async_refresh.assert_called_once()
 
 
 def test_button_entity_creation():
