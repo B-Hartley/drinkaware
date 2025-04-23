@@ -131,12 +131,10 @@ async def setup_integration(hass, mock_config_entry, mock_api_responses):
     # Set up the domain in hass.data
     hass.data.setdefault(DOMAIN, {})
     
-    # Mock the coordinator creation - version compatibility fix
     with patch("homeassistant.helpers.aiohttp_client.async_get_clientsession"), \
-         patch("custom_components.drinkaware.DrinkAwareDataUpdateCoordinator._async_update_data"), \
          patch("homeassistant.config_entries.ConfigEntries.async_setup", return_value=True), \
          patch("homeassistant.config_entries.ConfigEntries.async_get_entry", return_value=config_entry), \
-         patch("custom_components.drinkaware.__init__.async_forward_entry_setups", return_value=True):
+         patch("homeassistant.config_entries.async_forward_entry_setups", return_value=True):
         
         # Add the entry to the registry
         hass.config_entries._entries[config_entry.entry_id] = config_entry
