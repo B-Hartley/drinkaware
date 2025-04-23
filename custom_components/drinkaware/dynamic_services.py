@@ -50,44 +50,61 @@ def async_get_available_drinks(hass: HomeAssistant):
             continue
 
         if hasattr(coordinator, 'drinks_cache') and coordinator.drinks_cache:
-            # Combine standard drinks
-            if "categories" in coordinator.drinks_cache:
-                for category in coordinator.drinks_cache["categories"]:
-                    for drink in category.get("drinks", []):
-                        drink_id = drink.get("drinkId")
-                        if drink_id:
-                            drinks_data[drink_id] = drink
+            # Process standard drinks from categories
+            _process_standard_drinks(coordinator, drinks_data)
+            
+            # Process custom drinks from different sources
+            _process_custom_drinks(coordinator, custom_drinks)
 
-            # Add custom drinks from search results
-            if "drinks" in coordinator.drinks_cache:
-                for drink in coordinator.drinks_cache["drinks"]:
-                    if "derivedDrinkId" in drink:
-                        # This is likely a custom drink
-                        custom_drinks.append({
-                            **drink,
-                            "account_name": coordinator.account_name
-                        })
+    # Compile drink options from standard drinks
+    drink_options = _compile_standard_drink_options(drinks_data)
+    
+    # Add custom drinks to options
+    drink_options.extend(_compile_custom_drink_options(custom_drinks))
 
-            # Also check the customDrinks array if it exists
-            if "customDrinks" in coordinator.drinks_cache:
-                for drink in coordinator.drinks_cache["customDrinks"]:
-                    custom_drinks.append({
-                        **drink,
-                        "account_name": coordinator.account_name
-                    })
+    return drink_options
 
-            # Also check results array which is present in search results
-            if "results" in coordinator.drinks_cache:
-                for drink in coordinator.drinks_cache["results"]:
-                    if "derivedDrinkId" in drink:
-                        custom_drinks.append({
-                            **drink,
-                            "account_name": coordinator.account_name
-                        })
 
-    # Compile drink options
+def _process_standard_drinks(coordinator, drinks_data):
+    """Process standard drinks from categories in the drinks cache."""
+    if "categories" in coordinator.drinks_cache:
+        for category in coordinator.drinks_cache["categories"]:
+            for drink in category.get("drinks", []):
+                drink_id = drink.get("drinkId")
+                if drink_id:
+                    drinks_data[drink_id] = drink
+
+
+def _process_custom_drinks(coordinator, custom_drinks):
+    """Process custom drinks from different sources in the drinks cache."""
+    # Add custom drinks from search results
+    if "drinks" in coordinator.drinks_cache:
+        _extract_custom_drinks(coordinator.drinks_cache["drinks"], custom_drinks, coordinator.account_name)
+
+    # Process the customDrinks array if it exists
+    if "customDrinks" in coordinator.drinks_cache:
+        _extract_custom_drinks(coordinator.drinks_cache["customDrinks"], custom_drinks, coordinator.account_name)
+
+    # Process results array which is present in search results
+    if "results" in coordinator.drinks_cache:
+        _extract_custom_drinks(coordinator.drinks_cache["results"], custom_drinks, coordinator.account_name)
+
+
+def _extract_custom_drinks(drinks_array, custom_drinks, account_name):
+    """Extract custom drinks from an array and add to the custom_drinks list."""
+    for drink in drinks_array:
+        if "derivedDrinkId" in drink:
+            # Add account name to the drink info
+            custom_drinks.append({
+                **drink,
+                "account_name": account_name
+            })
+
+
+def _compile_standard_drink_options(drinks_data):
+    """Compile standard drink options from drinks data."""
     drink_options = []
-
+    
     # Add standard drinks first
     for drink_id, drink in sorted(drinks_data.items(), key=lambda x: x[1].get("title", "")):
         abv = drink.get("abv", 0)
@@ -96,8 +113,15 @@ def async_get_available_drinks(hass: HomeAssistant):
             "value": drink_id,
             "label": f"{title} ({abv}% ABV)"
         })
+        
+    return drink_options
 
-    # Then add any custom drinks
+
+def _compile_custom_drink_options(custom_drinks):
+    """Compile custom drink options from custom drinks list."""
+    drink_options = []
+    
+    # Add custom drinks
     for drink in sorted(custom_drinks, key=lambda x: x.get("title", "")):
         drink_id = drink.get("drinkId")
         abv = drink.get("abv", 0)
@@ -109,7 +133,7 @@ def async_get_available_drinks(hass: HomeAssistant):
                 "value": drink_id,
                 "label": f"{title} ({abv}% ABV) - Custom [{account_name}]"
             })
-
+            
     return drink_options
 
 

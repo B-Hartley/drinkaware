@@ -106,7 +106,8 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "instructions": (
                         "1. Click the link below to authorize Drinkaware\n"
                         "2. Log in with your Drinkaware credentials\n"
-                        "3. After successful login, you'll be redirected to a page that won't load (this is normal)\n"
+                        "3. After successful login, you'll be redirected to a page that won't load "
+                        "(this is normal)\n"
                         "4. Open your browser's Developer Tools (press F12), go to the Network tab\n"
                         "5. Find the request with 'callback' in the name, right-click and select 'Copy URL'\n"
                         "6. Click Submit below and paste the full redirect URL in the next step"
@@ -170,8 +171,10 @@ class DrinkAwareConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "instructions": (
                     "Paste the URL you copied from the Network tab in Developer Tools.\n"
-                    "It should start with 'uk.co.drinkaware.drinkaware://oauth/callback' and include a code parameter.\n"
-                    "If you can't find it, go back and look for a canceled/redirected request in the Network tab."
+                    "It should start with 'uk.co.drinkaware.drinkaware://oauth/callback' "
+                    "and include a code parameter.\n"
+                    "If you can't find it, go back and look for a canceled/redirected request "
+                    "in the Network tab."
                 )
             },
         )
